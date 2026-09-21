@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.3</title>
+<title>Godfather Web Edition v8.4</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -237,6 +237,17 @@ body{cursor:none}
 #building-loading-meta{display:flex;justify-content:space-between;gap:12px;margin-top:9px;font:9px Cinzel,serif;letter-spacing:1.5px;color:rgba(212,175,55,.68)}
 @keyframes loadPulse{0%,100%{transform:scale(1);opacity:.72}50%{transform:scale(1.08);opacity:1}}
 
+#pause-menu{position:fixed;inset:0;z-index:1450;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.76);backdrop-filter:blur(5px)}
+#pause-menu.on{display:flex}
+#pause-card{width:min(520px,calc(100vw - 32px));padding:28px;border:1px solid rgba(212,175,55,.34);border-radius:18px;background:linear-gradient(155deg,rgba(20,15,12,.98),rgba(6,6,8,.99));box-shadow:0 28px 80px rgba(0,0,0,.65)}
+#pause-card h2{font:800 24px Cinzel,serif;letter-spacing:4px;color:var(--gold);margin-bottom:6px}
+#pause-stats{font:11px Cinzel,serif;color:#8f805f;line-height:1.75;margin:0 0 18px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(212,175,55,.10)}
+.pause-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.pause-grid .menu-btn{justify-content:center;text-align:center}
+#fps-counter{position:fixed;left:14px;top:80px;z-index:205;display:none;padding:5px 8px;border-radius:8px;background:rgba(0,0,0,.62);border:1px solid rgba(90,200,120,.20);font:10px monospace;color:#8ee6a0;pointer-events:none}
+body.menu-active #fps-counter{display:none!important}
+@media(max-width:620px){.pause-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body class="menu-active">
@@ -384,7 +395,7 @@ body{cursor:none}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.3</h2>
+      <h2>🗺 ROADMAP v8.4</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -407,7 +418,8 @@ body{cursor:none}
         <div class="rmap-item done">✅ <b>v8.1 — Loading real entre cidades, polícia com sprite e morte animada</b></div>
         <div class="rmap-item done">✅ <b>v8.2 — Sprites pré-carregados, WebP, orientação corrigida e save v14 corrigido</b></div>
         <div class="rmap-item done">✅ <b>v8.3 — Menu completo, storage visível, áudio e gráficos configuráveis</b></div>
-        <div class="rmap-item pend">🔜 v8.4 — Chefes e campanha expandida</div>
+        <div class="rmap-item done">✅ <b>v8.4 — Pause menu, backup automático, culling e diagnóstico de FPS</b></div>
+        <div class="rmap-item pend">🔜 v8.5 — Chefes e campanha expandida</div>
       </div>
     </div>
   </div>
@@ -418,7 +430,7 @@ body{cursor:none}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.3 · MENU, SAVE, ÁUDIO & GRÁFICOS</div>
+      <div class="ssub">WEB EDITION — v8.4 · PAUSA, BACKUP & PERFORMANCE</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -448,6 +460,9 @@ body{cursor:none}
         <div class="setting-row"><label>Partículas<small>Tiros, faíscas, fumaça e sangue.</small></label><input id="set-particles" type="checkbox" checked></div>
         <div class="setting-row"><label>Iluminação noturna<small>Sombras e escurecimento do ciclo dia/noite.</small></label><input id="set-night" type="checkbox" checked></div>
         <div class="setting-row"><label>Filtro cinematográfico<small>Vinheta e textura visual sobre a tela.</small></label><input id="set-screenfx" type="checkbox" checked></div>
+        <div class="setting-row"><label>Screen shake<small>Tremor de câmera em tiros fortes, impactos e explosões.</small></label><input id="set-screenshake" type="checkbox" checked></div>
+        <div class="setting-row"><label>Contador de FPS<small>Mostra desempenho em tempo real durante a partida.</small></label><input id="set-fps" type="checkbox"></div>
+        <div class="setting-row"><label>Pausa automática<small>Pausa ao trocar de aba ou minimizar o navegador.</small></label><input id="set-autopause" type="checkbox" checked></div>
       </div>
       <button id="fullscreen-btn" class="menu-btn"><span>⛶ TELA CHEIA</span><small>ALTERNAR FULLSCREEN</small></button>
     </div>
@@ -458,6 +473,7 @@ body{cursor:none}
       <div class="save-grid">
         <button id="export-save-btn" class="menu-btn"><span>⬇ EXPORTAR SAVE</span></button>
         <button id="import-save-btn" class="menu-btn"><span>⬆ IMPORTAR SAVE</span></button>
+        <button id="restore-backup-btn" class="menu-btn"><span>♻ RESTAURAR BACKUP</span></button>
         <button id="delete-save-menu-btn" class="menu-btn danger"><span>🗑 APAGAR SAVE</span></button>
         <button id="clear-settings-btn" class="menu-btn danger"><span>↺ RESETAR CONFIGURAÇÕES</span></button>
       </div>
@@ -473,10 +489,26 @@ body{cursor:none}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.3</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.4</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
+
+<div id="pause-menu">
+  <div id="pause-card">
+    <h2>⏸ PAUSADO</h2>
+    <div id="pause-stats">Partida pausada.</div>
+    <div class="pause-grid">
+      <button id="pause-resume-btn" class="menu-btn continue"><span>▶ CONTINUAR</span></button>
+      <button id="pause-save-btn" class="menu-btn"><span>💾 SALVAR AGORA</span></button>
+      <button id="pause-gps-btn" class="menu-btn"><span>🗺 ALTERNAR GPS</span></button>
+      <button id="pause-fullscreen-btn" class="menu-btn"><span>⛶ TELA CHEIA</span></button>
+      <button id="pause-audio-btn" class="menu-btn"><span>🔊 ÁUDIO ON/OFF</span></button>
+      <button id="pause-menu-btn" class="menu-btn danger"><span>↩ SALVAR E IR AO MENU</span></button>
+    </div>
+  </div>
+</div>
+<div id="fps-counter">FPS --</div>
 
 <!-- Map Conquest Screen -->
 <div id="map-conquest" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:1500;align-items:center;justify-content:center;flex-direction:column;gap:0">
