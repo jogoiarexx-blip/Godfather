@@ -500,7 +500,7 @@ body.menu-active #fps-counter{display:none!important}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.4</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.5</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
@@ -2415,7 +2415,7 @@ function initRivals() {
   for (const p of PROPS) { const d=DIST.find(d=>d.id===p.dist); if(d&&d.owner==='rival') spawnRivalAt(p.x,p.y); }
 }
 function updateRivals(dt) {
-  if(BOSS_STATE.active){RIVALS.length=0;return;}
+  if(BOSS_STATE.active||BOSS_STATE.defeated){RIVALS.length=0;return;}
   rivalPower = Math.min(500, rivalPower+0.005*dt);
   rivalThink -= dt;
   if (rivalThink<=0) {
