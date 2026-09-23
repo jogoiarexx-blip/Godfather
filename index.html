@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.6</title>
+<title>Godfather Web Edition v8.7</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -405,7 +405,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.6</h2>
+      <h2>🗺 ROADMAP v8.7</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -431,7 +431,8 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.4 — Pause menu, backup automático, culling e diagnóstico de FPS</b></div>
         <div class="rmap-item done">✅ <b>v8.5 — Chefes de família, batalha final por cidade e campanha expandida</b></div>
         <div class="rmap-item done">✅ <b>v8.6 — Viaturas, carros rivais, bloqueios policiais e campanhas por cidade</b></div>
-        <div class="rmap-item pend">🔜 v8.7 — Veículos dirigíveis adicionais, garagem e customização</div>
+        <div class="rmap-item done">✅ <b>v8.7 — Interiores únicos, donos/balconistas e capangas exclusivos por prédio</b></div>
+        <div class="rmap-item pend">🔜 v8.8 — Veículos dirigíveis adicionais, garagem e customização</div>
       </div>
     </div>
   </div>
@@ -442,7 +443,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.6 · PERSEGUIÇÕES & OPERAÇÕES</div>
+      <div class="ssub">WEB EDITION — v8.7 · INTERIORES & NPCS EXCLUSIVOS</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -501,7 +502,7 @@ body.menu-active #fps-counter{display:none!important}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.6</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.7</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
@@ -1957,17 +1958,118 @@ async function cityLoadStep(pct,stage,sub,fn,title='CARREGANDO CIDADE',icon='�
 
 function compileInteriorRuntime(template){
   const solids=template.walls.concat(template.furniture.map(f=>({x:f.x,y:f.y,w:f.w,h:f.h,t:f.t||'furniture'})));
-  const lights=[[220,160],[520,300],[800,160],[760,450]].map((v,i)=>({x:v[0],y:v[1],radius:118+i*5}));
+  const srcLights=(template.lights&&template.lights.length)?template.lights:[[220,160],[520,300],[800,160],[760,450]];
+  const lights=srcLights.map((v,i)=>Array.isArray(v)?{x:v[0],y:v[1],radius:118+i*5}:{...v});
   return{solids,lights};
 }
 const INT_W=960,INT_H=600;
+
+const INTERIOR_NPC_SVG={
+  src:'assets/interiors/building_npcs.svg',
+  img:new Image(),loaded:false,cellW:40,cellH:80,
+  cats:{bar:0,restaurant:1,warehouse:2,garage:3,hotel:4,bank:5,jewelry:6,casino:7,theater:8,media:9,church:10,family:11},
+  roles:{owner:0,thug1:1,thug2:2,thug3:3}
+};
+INTERIOR_NPC_SVG.img.onload=()=>{INTERIOR_NPC_SVG.loaded=true;};
+INTERIOR_NPC_SVG.img.onerror=()=>{INTERIOR_NPC_SVG.loaded=false;console.warn('NPC atlas não carregou');};
+INTERIOR_NPC_SVG.img.src=INTERIOR_NPC_SVG.src;
+
+function interiorNpcCategoryForProp(prop){
+  const n=((prop&&prop.name)||'').toLowerCase();
+  if(/restaurante|pizzaria|pizza|padaria/.test(n))return'restaurant';
+  if(/bar|cantina|bazar|oliveira/.test(n))return'bar';
+  if(/armaz|doca|porto|destilar/.test(n))return'warehouse';
+  if(/garagem|oficina/.test(n))return'garage';
+  if(/hotel/.test(n))return'hotel';
+  if(/banco/.test(n))return'bank';
+  if(/joalher|antiqu/.test(n))return'jewelry';
+  if(/cassino|clube|jazz/.test(n))return'casino';
+  if(/teatro|ópera|opera|ringue|estádio|estadio|bowling/.test(n))return'theater';
+  if(/jornal|rádio|radio/.test(n))return'media';
+  if(/igreja/.test(n))return'church';
+  return'family';
+}
+function drawInteriorNpcSprite(cat,role,frame,x,y,w=40,h=80,flip=false,alpha=1){
+  const sh=INTERIOR_NPC_SVG,row=sh.cats[cat],roleIndex=sh.roles[role];
+  if(!sh.loaded||row==null||roleIndex==null)return false;
+  frame=Math.max(0,Math.min(3,frame|0));
+  const sx=(roleIndex*4+frame)*sh.cellW,sy=row*sh.cellH;
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);if(flip)ctx.scale(-1,1);
+  ctx.drawImage(sh.img,sx,sy,sh.cellW,sh.cellH,-w/2,-h+10,w,h);
+  ctx.restore();return true;
+}
+function drawInteriorOwnerExclusive(){
+  const x=INTERIOR.owner.x,y=INTERIOR.owner.y,cat=INTERIOR.npcCategory||'family';
+  const ready=INTERIOR.enemies.length===0&&!INTERIOR.prop.owned&&!INTERIOR.missionComplete;
+  const frame=ready?2:(Math.floor(Date.now()/430)%2);
+  ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(x,y+14,12,4,0,0,Math.PI*2);ctx.fill();
+  if(!drawInteriorNpcSprite(cat,'owner',frame,x,y,42,84,P.x<x)){
+    ctx.fillStyle='#21151c';ctx.beginPath();ctx.arc(x,y,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d4af37';ctx.font='18px serif';ctx.textAlign='center';ctx.fillText('👔',x,y+6);
+  }
+  if(ready){
+    const op=.68+Math.sin(Date.now()*.006)*.28;ctx.fillStyle='rgba(255,225,120,'+op+')';ctx.font='bold 10px Cinzel,serif';ctx.textAlign='center';ctx.fillText('[E] INTIMIDAR',x,y-48);
+  }
+}
+function drawInteriorEnemyExclusive(e){
+  const cat=e.npcCategory||INTERIOR.npcCategory||'family',role='thug'+(e.variant||1);
+  const moving=e.moving||false,shooting=(e.fireFx||0)>0;
+  const frame=shooting?2:(moving?1:0),flip=Math.cos(e.angle)<0;
+  ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(e.x,e.y+14,12,4,0,0,Math.PI*2);ctx.fill();
+  if(!drawInteriorNpcSprite(cat,role,frame,e.x,e.y,42,84,flip))drawEnemy(e.x,e.y,e.angle,e.hp,e.maxHp,e.type,e.wf,e);
+  if(e.hp<e.maxHp){const bw=34,bh=4,bx=e.x-bw/2,by=e.y-62;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#ff4b42';ctx.fillRect(bx,by,bw*(e.hp/e.maxHp),bh);}
+}
+
 function interiorOffsets(){return{x:Math.max(8,(canvas.width-INT_W)/2),y:HUD_H+Math.max(8,(canvas.height-HUD_H-INT_H)/2)};}
+function finishInteriorTemplate(t,prop,variant){
+  const dir=variant-1;
+  t.variant=variant;t.npcCategory=interiorNpcCategoryForProp(prop);
+  for(let i=0;i<t.furniture.length;i++){
+    const f=t.furniture[i],dx=dir*((i%2?1:-1)*(3+(i%3)*2)),dy=dir*((i%3)-1)*3;
+    f.x=Math.max(26,Math.min(INT_W-f.w-26,f.x+dx));f.y=Math.max(26,Math.min(INT_H-f.h-26,f.y+dy));
+  }
+  return t;
+}
 function interiorTemplateFor(prop){
-  const type=(prop.id+currentMapId)%3;
+  const n=(prop.name||'').toLowerCase(),variant=(prop.id+currentMapId)%3;
   const common=[{x:0,y:0,w:INT_W,h:18},{x:0,y:INT_H-18,w:INT_W,h:18},{x:0,y:0,w:18,h:INT_H},{x:INT_W-18,y:0,w:18,h:INT_H}];
-  if(type===0)return{name:'Escritório da Família',floor:'#17130f',trim:'#5b4528',walls:[...common,{x:420,y:18,w:22,h:230},{x:420,y:330,w:22,h:252},{x:650,y:170,w:22,h:260}],furniture:[{t:'desk',x:760,y:110,w:120,h:52},{t:'sofa',x:120,y:110,w:110,h:45},{t:'table',x:260,y:390,w:90,h:58},{t:'cabinet',x:520,y:80,w:60,h:32},{t:'safe',x:842,y:210,w:48,h:48}],spawn:{x:95,y:510},owner:{x:820,y:92},exit:{x:82,y:545}};
-  if(type===1)return{name:'Armazém Clandestino',floor:'#151617',trim:'#554c3f',walls:[...common,{x:300,y:120,w:24,h:340},{x:610,y:18,w:24,h:250},{x:610,y:345,w:24,h:237}],furniture:[{t:'crate',x:120,y:100,w:70,h:70},{t:'crate',x:210,y:210,w:70,h:70},{t:'crate',x:380,y:410,w:80,h:70},{t:'crate',x:720,y:350,w:70,h:70},{t:'desk',x:760,y:95,w:120,h:52},{t:'safe',x:845,y:185,w:48,h:48}],spawn:{x:90,y:520},owner:{x:820,y:82},exit:{x:78,y:548}};
-  return{name:'Salão Privado',floor:'#1a1012',trim:'#6b2530',walls:[...common,{x:390,y:18,w:22,h:190},{x:390,y:285,w:22,h:297},{x:670,y:120,w:22,h:340}],furniture:[{t:'bar',x:90,y:100,w:210,h:45},{t:'table',x:470,y:120,w:80,h:55},{t:'table',x:480,y:380,w:80,h:55},{t:'sofa',x:735,y:365,w:125,h:46},{t:'desk',x:750,y:78,w:120,h:50}],spawn:{x:95,y:510},owner:{x:815,y:70},exit:{x:80,y:545}};
+  let t;
+  if(/armaz|doca|porto|destilar/.test(n)){
+    t={name:'ARMAZÉM / PORTO',style:'warehouse',floor:variant===0?'#151719':variant===1?'#13181a':'#181613',trim:'#5a4e40',
+      walls:[...common,{x:274,y:110,w:22,h:360},{x:620,y:18,w:22,h:235},{x:620,y:350,w:22,h:232},{x:816,y:156,w:22,h:270}],
+      furniture:[{t:'crate',x:86,y:88,w:86,h:86},{t:'crate',x:116,y:338,w:92,h:92},{t:'crate',x:340,y:100,w:126,h:78},{t:'crate',x:356,y:422,w:110,h:82},{t:'desk',x:690,y:82,w:182,h:58},{t:'cabinet',x:866,y:196,w:58,h:126},{t:'safe',x:860,y:92,w:54,h:54}],
+      rugs:[{x:492,y:244,w:100,h:108,col:'rgba(150,90,40,.08)'}],decor:['pipes','hazard','crates'],lights:[[468,132],[532,476],[868,120]],spawnPoints:[[130,148],[172,380],[352,170],[360,482],[546,294],[738,136],[752,490],[886,282]],spawn:{x:86,y:524},owner:{x:900,y:72},exit:{x:74,y:546}};
+  }else if(/garagem|oficina/.test(n)){
+    t={name:'OFICINA / GARAGEM',style:'garage',floor:'#141719',trim:'#3d5262',
+      walls:[...common,{x:318,y:18,w:22,h:230},{x:318,y:338,w:22,h:244},{x:698,y:138,w:22,h:322}],
+      furniture:[{t:'workbench',x:82,y:84,w:196,h:52},{t:'crate',x:96,y:350,w:88,h:76},{t:'cabinet',x:400,y:86,w:72,h:132},{t:'table',x:448,y:390,w:112,h:72},{t:'desk',x:752,y:88,w:152,h:54},{t:'safe',x:830,y:410,w:58,h:58}],
+      rugs:[{x:372,y:238,w:246,h:110,col:'rgba(50,90,110,.10)'}],decor:['tools','oil','lamp'],lights:[[188,140],[478,138],[820,140],[520,460]],spawnPoints:[[148,174],[160,476],[422,176],[478,458],[594,286],[770,170],[832,474]],spawn:{x:92,y:520},owner:{x:838,y:72},exit:{x:82,y:546}};
+  }else if(/bar|cantina|restaurante|padaria|pizzaria|pizzeria|bazar|oliveira/.test(n)){
+    t={name:/restaurante|pizzaria|pizza|padaria/.test(n)?'RESTAURANTE / PIZZARIA':'BAR / CANTINA',style:'lounge',floor:'#191011',trim:'#6b2d2f',
+      walls:[...common,{x:326,y:18,w:22,h:220},{x:326,y:330,w:22,h:252},{x:668,y:140,w:22,h:300}],
+      furniture:[{t:'bar',x:72,y:82,w:212,h:52},{t:'table',x:408,y:86,w:124,h:78},{t:'table',x:430,y:368,w:124,h:78},{t:'sofa',x:734,y:86,w:146,h:56},{t:'sofa',x:118,y:390,w:118,h:50},{t:'desk',x:726,y:398,w:154,h:52}],
+      rugs:[{x:378,y:252,w:200,h:142,col:'rgba(105,22,24,.28)'},{x:108,y:100,w:172,h:84,col:'rgba(80,28,14,.20)'}],decor:['bottles','painting','plants'],lights:[[160,142],[484,160],[804,156]],spawnPoints:[[164,304],[226,464],[410,164],[520,164],[498,468],[758,146],[788,316],[820,470]],spawn:{x:92,y:520},owner:{x:836,y:64},exit:{x:82,y:546}};
+  }else if(/cassino|clube|jazz/.test(n)){
+    t={name:'CASSINO / CLUBE',style:'casino',floor:'#160d12',trim:'#7a1f34',
+      walls:[...common,{x:286,y:18,w:20,h:250},{x:286,y:350,w:20,h:232},{x:700,y:150,w:20,h:288}],
+      furniture:[{t:'bar',x:70,y:90,w:208,h:50},{t:'table',x:364,y:82,w:150,h:86},{t:'table',x:364,y:350,w:150,h:86},{t:'sofa',x:754,y:96,w:142,h:54},{t:'sofa',x:766,y:398,w:128,h:54},{t:'desk',x:536,y:414,w:132,h:50}],
+      rugs:[{x:338,y:244,w:198,h:96,col:'rgba(88,10,34,.30)'},{x:748,y:244,w:150,h:82,col:'rgba(88,10,34,.24)'}],decor:['cards','chandelier','painting'],lights:[[188,146],[436,156],[440,426],[820,156]],spawnPoints:[[154,170],[172,462],[420,168],[420,466],[546,296],[782,162],[804,468]],spawn:{x:92,y:522},owner:{x:836,y:68},exit:{x:84,y:546}};
+  }else if(/banco|joalher|jornal|rádio|radio|antiqu/.test(n)){
+    t={name:/banco/.test(n)?'BANCO':(/joalher|antiqu/.test(n)?'JOALHERIA':'JORNAL / RÁDIO'),style:'office',floor:'#161311',trim:'#5f4530',
+      walls:[...common,{x:402,y:18,w:22,h:238},{x:402,y:334,w:22,h:248},{x:700,y:154,w:22,h:250}],
+      furniture:[{t:'desk',x:76,y:84,w:220,h:64},{t:'desk',x:106,y:366,w:180,h:54},{t:'table',x:450,y:324,w:150,h:88},{t:'cabinet',x:474,y:92,w:70,h:126},{t:'cabinet',x:744,y:82,w:142,h:106},{t:'safe',x:816,y:328,w:90,h:90}],
+      rugs:[{x:320,y:242,w:188,h:144,col:'rgba(78,35,16,.18)'}],decor:['painting','plants','lamp'],lights:[[190,152],[520,146],[810,146],[548,408]],spawnPoints:[[116,292],[158,518],[332,408],[498,178],[536,518],[760,190],[822,492]],spawn:{x:88,y:520},owner:{x:830,y:70},exit:{x:84,y:546}};
+  }else if(/hotel|mans|castello/.test(n)){
+    t={name:/hotel/.test(n)?'HOTEL':'PRÉDIO DA FAMÍLIA',style:'hotel',floor:'#171010',trim:'#6f4f2f',
+      walls:[...common,{x:320,y:18,w:22,h:214},{x:320,y:332,w:22,h:250},{x:622,y:130,w:22,h:308}],
+      furniture:[{t:'sofa',x:86,y:94,w:168,h:56},{t:'table',x:116,y:214,w:144,h:70},{t:'table',x:414,y:108,w:174,h:92},{t:'cabinet',x:732,y:88,w:148,h:110},{t:'desk',x:700,y:342,w:200,h:62},{t:'safe',x:564,y:422,w:72,h:72}],
+      rugs:[{x:360,y:248,w:244,h:148,col:'rgba(88,22,28,.22)'},{x:104,y:346,w:170,h:92,col:'rgba(70,20,16,.18)'}],decor:['chandelier','painting','plants'],lights:[[178,142],[500,160],[804,154],[798,402]],spawnPoints:[[134,148],[154,442],[430,166],[510,486],[758,174],[814,512],[494,312]],spawn:{x:92,y:522},owner:{x:844,y:70},exit:{x:84,y:546}};
+  }else{
+    t={name:/igreja/.test(n)?'IGREJA':(/teatro|ópera|opera/.test(n)?'TEATRO / ÓPERA':'SALÃO PRIVADO'),style:/igreja/.test(n)?'church':'venue',floor:'#141014',trim:'#614b35',
+      walls:[...common,{x:250,y:18,w:18,h:230},{x:250,y:344,w:18,h:238},{x:706,y:112,w:18,h:358}],
+      furniture:[{t:'sofa',x:80,y:90,w:124,h:54},{t:'sofa',x:80,y:374,w:124,h:54},{t:'table',x:350,y:216,w:170,h:90},{t:'desk',x:750,y:94,w:168,h:54},{t:'sofa',x:790,y:250,w:84,h:48},{t:'sofa',x:790,y:382,w:84,h:48}],
+      rugs:[{x:320,y:206,w:240,h:168,col:'rgba(82,28,24,.22)'},{x:750,y:190,w:152,h:116,col:'rgba(75,32,18,.14)'}],decor:['stage','painting','lamp'],lights:[[144,150],[436,150],[836,150],[832,420]],spawnPoints:[[138,258],[142,470],[368,176],[428,410],[566,330],[774,152],[808,498]],spawn:{x:94,y:522},owner:{x:840,y:70},exit:{x:84,y:546}};
+  }
+  return finishInteriorTemplate(t,prop,variant);
 }
 function interiorSolids(){return INTERIOR.solidsCache&&INTERIOR.solidsCache.length?INTERIOR.solidsCache:(INTERIOR.template?INTERIOR.template.walls.concat(INTERIOR.template.furniture.map(f=>({x:f.x,y:f.y,w:f.w,h:f.h}))):[]);}
 function collidesInterior(x,y,r=13){if(x-r<18||y-r<18||x+r>INT_W-18||y+r>INT_H-18)return true;for(const o of interiorSolids())if(circleRectHit(x,y,r,o))return true;return false;}
@@ -1985,11 +2087,11 @@ function interiorLineBlocked(x1,y1,x2,y2,pad=2){for(const o of interiorSolids())
 function spawnInteriorEnemies(prop){
   INTERIOR.enemies=[];
   if(prop.owned)return;
-  const spots=[[245,110],[260,500],[525,110],[540,490],[755,300],[860,460],[520,290]];
-  const n=Math.min(7,3+currentMapId+Math.floor(GS.respect/1800));
+  const spots=(INTERIOR.template&&INTERIOR.template.spawnPoints&&INTERIOR.template.spawnPoints.length)?INTERIOR.template.spawnPoints:[[245,110],[260,500],[525,110],[540,490],[755,300],[860,460],[520,290]];
+  const n=Math.min(7,3+currentMapId+Math.floor(GS.respect/1800)),cat=interiorNpcCategoryForProp(prop);
   for(let i=0;i<n;i++){
     const s=spots[i%spots.length],type=chooseEnemyType(i,n),st=ENEMY_TYPES[type]||ENEMY_TYPES.grunt,hp=Math.round(CFG.EHP*st.hp*1.05);
-    const e={x:s[0],y:s[1],hp,maxHp:hp,type,angle:0,sTimer:500+Math.random()*900,wf:0,wt:0,navSeed:i&1};
+    const e={x:s[0],y:s[1],hp,maxHp:hp,type,angle:0,sTimer:500+Math.random()*900,wf:0,wt:0,navSeed:i&1,npcCategory:cat,variant:(i%3)+1,fireFx:0,moving:false};
     if(collidesInterior(e.x,e.y,15)){e.x=180+i*95;e.y=180+(i%2)*230;}
     INTERIOR.enemies.push(e);
   }
@@ -2000,7 +2102,7 @@ async function enterPropertyInterior(prop){
   BUILDING_LOAD.mode='enter';GS.paused=true;mDown=false;
   setBuildingLoading(true,'CARREGANDO INTERIOR','Lendo a planta de '+prop.name+'...',4,'INICIANDO');
   INTERIOR.returnPos={x:P.x,y:P.y,angle:P.angle};INTERIOR.prop=prop;INTERIOR.missionComplete=!!prop.owned;INTERIOR.time=0;
-  await buildingLoadStep(18,'PLANTA','Montando salas, corredores e entradas...',()=>{INTERIOR.template=interiorTemplateFor(prop);INTERIOR.owner={...INTERIOR.template.owner};INTERIOR.exit={...INTERIOR.template.exit};});
+  await buildingLoadStep(18,'PLANTA','Montando salas, corredores e entradas...',()=>{INTERIOR.template=interiorTemplateFor(prop);INTERIOR.owner={...INTERIOR.template.owner};INTERIOR.exit={...INTERIOR.template.exit};INTERIOR.npcCategory=INTERIOR.template.npcCategory||interiorNpcCategoryForProp(prop);});
   await buildingLoadStep(38,'COLISÕES','Compilando paredes, móveis e cobertura...',()=>{const rt=compileInteriorRuntime(INTERIOR.template);INTERIOR.solidsCache=rt.solids;INTERIOR.lightPoints=rt.lights;});
   await buildingLoadStep(60,'SEGURANÇA','Posicionando a segurança do prédio...',()=>{spawnInteriorEnemies(prop);});
   await buildingLoadStep(78,'ILUMINAÇÃO','Preparando luzes, sombras e ambiente...',()=>{INTERIOR.bullets.length=0;PARTS.length=0;FX.length=0;COMBAT_TEXT.length=0;});
@@ -2019,7 +2121,7 @@ async function exitInterior(force=false){
   await buildingLoadStep(62,'CIDADE','Restaurando ruas, tráfego e IA externa...',()=>{PARTS.length=0;FX.length=0;COMBAT_TEXT.length=0;});
   await buildingLoadStep(84,'POSIÇÃO','Reposicionando você na entrada...',()=>{P.x=ret.x;P.y=ret.y;P.angle=ret.angle||0;ensureEntityFree(P,13,180);});
   await buildingLoadStep(100,'PRONTO','Cidade carregada.',()=>{});
-  INTERIOR.active=false;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;INTERIOR.prop=null;INTERIOR.template=null;INTERIOR.solidsCache.length=0;INTERIOR.lightPoints.length=0;
+  INTERIOR.active=false;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;INTERIOR.prop=null;INTERIOR.template=null;INTERIOR.npcCategory=null;INTERIOR.solidsCache.length=0;INTERIOR.lightPoints.length=0;
   const mm=document.getElementById('minimap-wrap');if(mm)mm.style.display='';const mp=document.getElementById('map-progress');if(mp)mp.style.display='';document.getElementById('interior-hud')?.classList.remove('on');
   setBuildingLoading(false);GS.paused=false;showMsg('🚪 Voltou para a rua.','i');
 }
@@ -2058,13 +2160,17 @@ function shootInterior(tx,ty){
   for(let k=0;k<w.bullets;k++){const a=angle+(Math.random()-.5)*dyn;INTERIOR.bullets.push({x:sx,y:sy,px:sx,py:sy,vx:Math.cos(a)*w.bspeed,vy:Math.sin(a)*w.bspeed,dist:0,owner:'player',dmg:w.dmg,range:w.range,headMult:w.headMult||1.5});}
   w.clip=Math.max(0,(w.clip??w.magSize)-1);recoilKick=Math.min(.24,recoilKick+(w.recoil||.02));shootCD=w.cd;spawnMuzzleFx(sx,sy,angle,w.id);addScreenShake(w.id===1?3.5:w.id===2?1.2:1.6);renderWeaponHUD();if(w.clip===0&&canReload(w))startReload(true);
 }
-function fireInteriorEnemy(e){const a=Math.atan2(P.y-e.y,P.x-e.x)+(Math.random()-.5)*.16;INTERIOR.bullets.push({x:e.x,y:e.y,px:e.x,py:e.y,vx:Math.cos(a)*CFG.BSPEED*.72,vy:Math.sin(a)*CFG.BSPEED*.72,dist:0,owner:'enemy',dmg:CFG.EDMG*(1+currentMapId*.15),range:520});spawnMuzzleFx(e.x,e.y,a,0,'enemy');}
+function fireInteriorEnemy(e){
+  const a=Math.atan2(P.y-e.y,P.x-e.x)+(Math.random()-.5)*.16;
+  INTERIOR.bullets.push({x:e.x,y:e.y,px:e.x,py:e.y,vx:Math.cos(a)*CFG.BSPEED*.72,vy:Math.sin(a)*CFG.BSPEED*.72,dist:0,owner:'enemy',dmg:CFG.EDMG*(1+currentMapId*.15),range:520});
+  e.fireFx=170;e.sprShoot=170;spawnMuzzleFx(e.x,e.y,a,0,'enemy');
+}
 function updateInterior(dt){
   if(shootCD>0)shootCD-=dt;const sc=dt/16;
   for(const e of INTERIOR.enemies){
     const st=ENEMY_TYPES[e.type]||ENEMY_TYPES.grunt,dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy);e.angle=Math.atan2(dy,dx);e.sTimer-=dt;
-    if(d>st.preferred+30){const step=CFG.ESPEED*st.speed*sc,a=e.angle,cands=[a,a+.55,a-.55,a+1,a-1];for(const aa of cands){const ox=e.x,oy=e.y;moveInteriorEntity(e,Math.cos(aa)*step,Math.sin(aa)*step,15);if(Math.hypot(e.x-ox,e.y-oy)>.01)break;}}
-    e.wt+=dt;if(e.wt>150){e.wf=(e.wf+1)%4;e.wt=0;}
+    e.moving=false;if(d>st.preferred+30){const step=CFG.ESPEED*st.speed*sc,a=e.angle,cands=[a,a+.55,a-.55,a+1,a-1];for(const aa of cands){const ox=e.x,oy=e.y;moveInteriorEntity(e,Math.cos(aa)*step,Math.sin(aa)*step,15);if(Math.hypot(e.x-ox,e.y-oy)>.01){e.moving=true;break;}}}
+    e.fireFx=Math.max(0,(e.fireFx||0)-dt);e.wt+=dt;if(e.wt>150){e.wf=(e.wf+1)%4;e.wt=0;}
     if(e.sTimer<=0&&d<st.range&&!interiorLineBlocked(e.x,e.y,P.x,P.y,4)){fireInteriorEnemy(e);e.sTimer=st.cdMin+Math.random()*st.cdVar;}
   }
   for(let i=INTERIOR.bullets.length-1;i>=0;i--){const b=INTERIOR.bullets[i];b.px=b.x;b.py=b.y;b.x+=b.vx*sc;b.y+=b.vy*sc;b.dist+=Math.hypot(b.vx,b.vy)*sc;
@@ -2081,29 +2187,54 @@ function performInteriorMelee(){
 function drawInteriorWorld(){
   const t=INTERIOR.template;if(!t)return;const T=Date.now()*.001;
   const g=ctx.createLinearGradient(0,0,INT_W,INT_H);g.addColorStop(0,t.floor);g.addColorStop(1,'#090909');ctx.fillStyle=g;ctx.fillRect(0,0,INT_W,INT_H);
-  // floor boards / tiles
-  ctx.strokeStyle='rgba(255,255,255,.025)';ctx.lineWidth=1;for(let y=25;y<INT_H;y+=24){ctx.beginPath();ctx.moveTo(18,y);ctx.lineTo(INT_W-18,y);ctx.stroke();}
-  for(let x=30;x<INT_W;x+=48){ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,INT_H-18);ctx.stroke();}
-  // rugs and light pools
-  ctx.fillStyle='rgba(90,18,20,.25)';ctx.fillRect(355,215,220,120);ctx.strokeStyle='rgba(212,175,55,.15)';ctx.strokeRect(355,215,220,120);
-  for(const l of (INTERIOR.lightPoints.length?INTERIOR.lightPoints:[[220,160],[520,300],[800,160],[760,450]].map(v=>({x:v[0],y:v[1],radius:130})))){const lg=ctx.createRadialGradient(l.x,l.y,0,l.x,l.y,l.radius||130);lg.addColorStop(0,'rgba(255,210,120,.09)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.beginPath();ctx.arc(l.x,l.y,l.radius||130,0,Math.PI*2);ctx.fill();}
-  // walls
-  for(const w of t.walls){ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(w.x+6,w.y+7,w.w,w.h);const wg=ctx.createLinearGradient(w.x,w.y,w.x+w.w,w.y+w.h);wg.addColorStop(0,t.trim);wg.addColorStop(1,'#241b14');ctx.fillStyle=wg;ctx.fillRect(w.x,w.y,w.w,w.h);ctx.strokeStyle='rgba(255,255,255,.05)';ctx.strokeRect(w.x,w.y,w.w,w.h);}
-  // furniture
-  for(const f of t.furniture){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(f.x+5,f.y+6,f.w,f.h);if(f.t==='crate'){ctx.fillStyle='#4b3824';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='#715536';ctx.strokeRect(f.x+6,f.y+6,f.w-12,f.h-12);ctx.beginPath();ctx.moveTo(f.x+6,f.y+6);ctx.lineTo(f.x+f.w-6,f.y+f.h-6);ctx.moveTo(f.x+f.w-6,f.y+6);ctx.lineTo(f.x+6,f.y+f.h-6);ctx.stroke();}
-    else if(f.t==='desk'||f.t==='bar'){const dg=ctx.createLinearGradient(f.x,f.y,f.x,f.y+f.h);dg.addColorStop(0,'#563b24');dg.addColorStop(1,'#26180f');ctx.fillStyle=dg;ctx.fillRect(f.x,f.y,f.w,f.h);ctx.fillStyle='rgba(212,175,55,.12)';ctx.fillRect(f.x+6,f.y+5,f.w-12,3);}
-    else if(f.t==='sofa'){ctx.fillStyle='#34151a';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.fillStyle='#4b2027';ctx.fillRect(f.x+8,f.y+7,f.w-16,f.h-14);}
-    else if(f.t==='table'){ctx.fillStyle='#44301e';ctx.beginPath();ctx.ellipse(f.x+f.w/2,f.y+f.h/2,f.w/2,f.h/2,0,0,Math.PI*2);ctx.fill();}
-    else if(f.t==='cabinet'){ctx.fillStyle='#26272a';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='rgba(255,255,255,.08)';ctx.strokeRect(f.x,f.y,f.w,f.h);}
-    else if(f.t==='safe'){ctx.fillStyle='#22262a';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='#666';ctx.strokeRect(f.x+4,f.y+4,f.w-8,f.h-8);ctx.beginPath();ctx.arc(f.x+f.w/2,f.y+f.h/2,7,0,Math.PI*2);ctx.stroke();}}
-  // Exit marker
-  const ep=0.6+Math.sin(T*4)*.25;ctx.fillStyle=`rgba(80,210,120,${.12*ep})`;ctx.beginPath();ctx.arc(INTERIOR.exit.x,INTERIOR.exit.y,38,0,Math.PI*2);ctx.fill();ctx.fillStyle=`rgba(120,255,155,${ep})`;ctx.font='bold 10px Cinzel,serif';ctx.textAlign='center';ctx.fillText('[E] SAIR',INTERIOR.exit.x,INTERIOR.exit.y-24);
-  // Owner / objective
-  if(!INTERIOR.prop.owned&&!INTERIOR.missionComplete&&INTERIOR.enemies.length===0){const op=0.65+Math.sin(T*5)*.3;ctx.fillStyle='rgba(212,175,55,.13)';ctx.beginPath();ctx.arc(INTERIOR.owner.x,INTERIOR.owner.y,42,0,Math.PI*2);ctx.fill();ctx.font='24px serif';ctx.fillText('👔',INTERIOR.owner.x,INTERIOR.owner.y+7);ctx.fillStyle=`rgba(255,225,120,${op})`;ctx.font='bold 10px Cinzel,serif';ctx.fillText('[E] INTIMIDAR',INTERIOR.owner.x,INTERIOR.owner.y-32);}
+
+  ctx.lineWidth=1;
+  if(t.style==='warehouse'||t.style==='garage'){
+    ctx.strokeStyle='rgba(255,255,255,.026)';for(let y=32;y<INT_H;y+=52){ctx.beginPath();ctx.moveTo(22,y);ctx.lineTo(INT_W-22,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(220,170,80,.075)';ctx.setLineDash([14,8]);ctx.strokeRect(350,250,220,92);ctx.setLineDash([]);
+  }else if(t.style==='casino'||t.style==='hotel'||t.style==='lounge'){
+    ctx.fillStyle='rgba(255,255,255,.018)';for(let y=22;y<INT_H;y+=36)for(let x=((Math.floor(y/36))&1)?40:18;x<INT_W;x+=72)ctx.fillRect(x,y,32,16);
+  }else{
+    ctx.strokeStyle='rgba(255,255,255,.026)';for(let y=26;y<INT_H;y+=24){ctx.beginPath();ctx.moveTo(18,y);ctx.lineTo(INT_W-18,y);ctx.stroke();}
+    for(let x=42;x<INT_W;x+=120){ctx.strokeStyle='rgba(0,0,0,.05)';ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,INT_H-18);ctx.stroke();}
+  }
+
+  for(const rg of (t.rugs||[])){ctx.fillStyle=rg.col||'rgba(90,18,20,.24)';ctx.fillRect(rg.x,rg.y,rg.w,rg.h);ctx.strokeStyle='rgba(212,175,55,.15)';ctx.strokeRect(rg.x,rg.y,rg.w,rg.h);}
+  for(const l of (INTERIOR.lightPoints.length?INTERIOR.lightPoints:[])){const lg=ctx.createRadialGradient(l.x,l.y,0,l.x,l.y,l.radius||125);lg.addColorStop(0,'rgba(255,210,120,.10)');lg.addColorStop(.55,'rgba(255,210,120,.025)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.beginPath();ctx.arc(l.x,l.y,l.radius||125,0,Math.PI*2);ctx.fill();}
+
+  for(const w of t.walls){ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(w.x+7,w.y+8,w.w,w.h);const wg=ctx.createLinearGradient(w.x,w.y,w.x+w.w,w.y+w.h);wg.addColorStop(0,t.trim);wg.addColorStop(1,'#241b14');ctx.fillStyle=wg;ctx.fillRect(w.x,w.y,w.w,w.h);ctx.strokeStyle='rgba(255,255,255,.055)';ctx.strokeRect(w.x,w.y,w.w,w.h);}
+
+  for(const f of t.furniture){
+    ctx.fillStyle='rgba(0,0,0,.38)';ctx.fillRect(f.x+5,f.y+6,f.w,f.h);
+    if(f.t==='crate'){ctx.fillStyle='#5d4226';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='#8b6539';ctx.strokeRect(f.x+6,f.y+6,f.w-12,f.h-12);ctx.beginPath();ctx.moveTo(f.x+6,f.y+6);ctx.lineTo(f.x+f.w-6,f.y+f.h-6);ctx.moveTo(f.x+f.w-6,f.y+6);ctx.lineTo(f.x+6,f.y+f.h-6);ctx.stroke();}
+    else if(f.t==='desk'||f.t==='bar'||f.t==='workbench'){const dg=ctx.createLinearGradient(f.x,f.y,f.x,f.y+f.h);dg.addColorStop(0,f.t==='workbench'?'#4b5660':'#68452a');dg.addColorStop(1,f.t==='workbench'?'#252b30':'#29190f');ctx.fillStyle=dg;ctx.fillRect(f.x,f.y,f.w,f.h);ctx.fillStyle='rgba(212,175,55,.12)';ctx.fillRect(f.x+6,f.y+5,f.w-12,3);if(f.t==='bar'){for(let i=0;i<4;i++){ctx.fillStyle=i%2?'#71302c':'#335f3a';ctx.fillRect(f.x+20+i*28,f.y-9,8,9);}}}
+    else if(f.t==='sofa'){ctx.fillStyle=t.style==='casino'?'#551426':'#3d1b22';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.fillStyle='rgba(255,255,255,.055)';ctx.fillRect(f.x+8,f.y+7,f.w-16,f.h-14);}
+    else if(f.t==='table'){ctx.fillStyle='#51351f';ctx.beginPath();ctx.ellipse(f.x+f.w/2,f.y+f.h/2,f.w/2,f.h/2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,230,180,.12)';ctx.beginPath();ctx.arc(f.x+f.w/2,f.y+f.h/2,Math.min(f.w,f.h)*.16,0,Math.PI*2);ctx.fill();}
+    else if(f.t==='cabinet'){ctx.fillStyle='#30343a';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='rgba(255,255,255,.10)';ctx.strokeRect(f.x+4,f.y+4,f.w-8,f.h-8);ctx.fillStyle='#b69c61';ctx.fillRect(f.x+f.w/2-2,f.y+12,4,12);}
+    else if(f.t==='safe'){ctx.fillStyle='#41464d';ctx.fillRect(f.x,f.y,f.w,f.h);ctx.strokeStyle='#8b9198';ctx.strokeRect(f.x+5,f.y+5,f.w-10,f.h-10);ctx.beginPath();ctx.arc(f.x+f.w/2,f.y+f.h/2,8,0,Math.PI*2);ctx.stroke();}
+  }
+
+  for(const d of (t.decor||[])){
+    if(d==='painting'){ctx.fillStyle='#b28a43';ctx.fillRect(110,34,72,44);ctx.fillStyle='#31141a';ctx.fillRect(116,40,60,32);}
+    else if(d==='plants'){for(const p of [[300,88],[610,500]]){const x=p[0],y=p[1];ctx.fillStyle='#63371f';ctx.fillRect(x-8,y+14,16,14);ctx.fillStyle='#2e6b35';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(x+(i-2)*5,y+8-(i%2)*6,8,0,Math.PI*2);ctx.fill();}}}
+    else if(d==='lamp'){ctx.fillStyle='#c7a65a';ctx.fillRect(580,54,4,32);ctx.beginPath();ctx.moveTo(568,86);ctx.lineTo(596,86);ctx.lineTo(590,104);ctx.lineTo(574,104);ctx.closePath();ctx.fill();}
+    else if(d==='bottles'){for(let i=0;i<7;i++){ctx.fillStyle=i%2?'#38613d':'#78302d';ctx.fillRect(92+i*24,61,8,18);}}
+    else if(d==='chandelier'){ctx.strokeStyle='#c8a257';ctx.beginPath();ctx.moveTo(480,18);ctx.lineTo(480,54);ctx.stroke();for(const x of [456,480,504]){ctx.beginPath();ctx.arc(x,62,7,0,Math.PI*2);ctx.stroke();}}
+    else if(d==='cards'){ctx.fillStyle='rgba(230,220,190,.65)';for(const p of [[405,120],[445,394],[805,160]]){const x=p[0],y=p[1];ctx.fillRect(x,y,10,14);ctx.fillRect(x+13,y+3,10,14);}}
+    else if(d==='pipes'){ctx.strokeStyle='#50606a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(32,90);ctx.lineTo(32,510);ctx.moveTo(32,115);ctx.lineTo(230,115);ctx.stroke();ctx.lineWidth=1;}
+    else if(d==='hazard'){ctx.fillStyle='rgba(235,170,40,.12)';for(let i=0;i<7;i++)ctx.fillRect(480+i*18,252,9,92);}
+    else if(d==='tools'){ctx.strokeStyle='#a28b68';for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(80+i*24,44);ctx.lineTo(88+i*24,68);ctx.stroke();}}
+    else if(d==='oil'){ctx.fillStyle='rgba(20,20,20,.35)';ctx.beginPath();ctx.ellipse(520,448,42,18,.2,0,Math.PI*2);ctx.fill();}
+    else if(d==='stage'){ctx.fillStyle='#3b1518';ctx.fillRect(365,54,220,52);ctx.fillStyle='#8b2630';ctx.fillRect(365,54,220,8);}
+  }
+
+  const ep=.62+Math.sin(T*4)*.25;ctx.fillStyle='rgba(80,210,120,'+(.11*ep)+')';ctx.beginPath();ctx.arc(INTERIOR.exit.x,INTERIOR.exit.y,38,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(120,255,155,'+ep+')';ctx.font='bold 10px Cinzel,serif';ctx.textAlign='center';ctx.fillText('[E] SAIR',INTERIOR.exit.x,INTERIOR.exit.y-25);
+  if(!INTERIOR.prop.owned&&!INTERIOR.missionComplete&&INTERIOR.enemies.length===0){ctx.fillStyle='rgba(212,175,55,.12)';ctx.beginPath();ctx.arc(INTERIOR.owner.x,INTERIOR.owner.y,44,0,Math.PI*2);ctx.fill();}
 }
 function drawInteriorScene(){
   const off=interiorOffsets();ctx.save();ctx.translate(off.x+shakeX,off.y+shakeY);drawInteriorWorld();
-  for(const e of INTERIOR.enemies)drawEnemy(e.x,e.y,e.angle,e.hp,e.maxHp,e.type,e.wf,e);
+  if(INTERIOR.prop)drawInteriorOwnerExclusive();
+  for(const e of INTERIOR.enemies)drawInteriorEnemyExclusive(e);
   drawDeathAnims();
   drawPlayer(P.x,P.y,P.angle);
   for(const b of INTERIOR.bullets)drawBulletVisual(b);
