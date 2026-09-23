@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.4</title>
+<title>Godfather Web Edition v8.5</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -237,6 +237,16 @@ body{cursor:none}
 #building-loading-meta{display:flex;justify-content:space-between;gap:12px;margin-top:9px;font:9px Cinzel,serif;letter-spacing:1.5px;color:rgba(212,175,55,.68)}
 @keyframes loadPulse{0%,100%{transform:scale(1);opacity:.72}50%{transform:scale(1.08);opacity:1}}
 
+#boss-hud{position:fixed;left:50%;top:108px;transform:translateX(-50%);width:min(560px,calc(100vw - 90px));z-index:230;display:none;padding:10px 13px 11px;border:1px solid rgba(210,48,38,.48);border-radius:13px;background:linear-gradient(180deg,rgba(30,8,8,.94),rgba(8,5,6,.94));box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 24px rgba(180,20,20,.08);pointer-events:none}
+#boss-hud.on{display:block}
+#boss-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px;font-family:Cinzel,serif}
+#boss-name{font-size:12px;font-weight:800;letter-spacing:1.7px;color:#f3d27b;text-shadow:0 0 12px rgba(212,175,55,.2)}
+#boss-phase{font-size:9px;letter-spacing:1.4px;color:#d57b71}
+#boss-track{height:9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);overflow:hidden}
+#boss-bar{height:100%;width:100%;background:linear-gradient(90deg,#741008,#d63225,#ef9b48);box-shadow:0 0 14px rgba(220,45,30,.36);transition:width .12s linear}
+#boss-meta{display:flex;justify-content:space-between;margin-top:6px;font:9px Cinzel,serif;letter-spacing:1px;color:#8f7a69}
+body.menu-active #boss-hud{display:none!important}
+
 #pause-menu{position:fixed;inset:0;z-index:1450;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.76);backdrop-filter:blur(5px)}
 #pause-menu.on{display:flex}
 #pause-card{width:min(520px,calc(100vw - 32px));padding:28px;border:1px solid rgba(212,175,55,.34);border-radius:18px;background:linear-gradient(155deg,rgba(20,15,12,.98),rgba(6,6,8,.99));box-shadow:0 28px 80px rgba(0,0,0,.65)}
@@ -395,7 +405,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.4</h2>
+      <h2>🗺 ROADMAP v8.5</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -419,7 +429,8 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.2 — Sprites pré-carregados, WebP, orientação corrigida e save v14 corrigido</b></div>
         <div class="rmap-item done">✅ <b>v8.3 — Menu completo, storage visível, áudio e gráficos configuráveis</b></div>
         <div class="rmap-item done">✅ <b>v8.4 — Pause menu, backup automático, culling e diagnóstico de FPS</b></div>
-        <div class="rmap-item pend">🔜 v8.5 — Chefes e campanha expandida</div>
+        <div class="rmap-item done">✅ <b>v8.5 — Chefes de família, batalha final por cidade e campanha expandida</b></div>
+        <div class="rmap-item pend">🔜 v8.6 — Veículos, perseguições e missões de história avançadas</div>
       </div>
     </div>
   </div>
@@ -430,7 +441,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.4 · PAUSA, BACKUP & PERFORMANCE</div>
+      <div class="ssub">WEB EDITION — v8.5 · CHEFES & CAMPANHA</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -492,6 +503,12 @@ body.menu-active #fps-counter{display:none!important}
       <div class="save-card"><b>Godfather Web Edition v8.4</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
+</div>
+
+<div id="boss-hud">
+  <div id="boss-head"><span id="boss-name">CHEFE DA FAMÍLIA</span><span id="boss-phase">FASE 1</span></div>
+  <div id="boss-track"><div id="boss-bar"></div></div>
+  <div id="boss-meta"><span id="boss-hp">0 / 0 HP</span><span id="boss-dist">—</span></div>
 </div>
 
 <div id="pause-menu">
@@ -1132,6 +1149,7 @@ const MAP_DEFS = [
 function loadMap(mapId) {
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
+  resetBossState();
 
   // Reset world arrays
   ENEMIES.length=0; RIVALS.length=0; POLICE.length=0; GUARDS.length=0;
@@ -1217,6 +1235,7 @@ function loadMap(mapId) {
 async function loadMapReal(mapId){
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
+  resetBossState();
   await cityLoadStep(6,'LIMPANDO','Encerrando a cidade anterior...',()=>{ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;GUARDS.length=0;PROP_GUARDS.length=0;SAFEHOUSES.length=0;BULLETS.length=0;PARTS.length=0;FX.length=0;HEALTH_PACKS.length=0;COMBAT_TEXT.length=0;DEATH_ANIMS.length=0;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;reloadTimer=0;reloadWeapon=-1;recoilKick=0;meleeCD=0;meleeSwing=0;_winCache.clear();});
   await cityLoadStep(18,'DISTRITOS','Aplicando território, distritos e negócios...',()=>{
     DIST.length=0; for(const d of def.districts) DIST.push({...d,x:S(d.x),y:S(d.y),w:S(d.w),h:S(d.h)});
@@ -1266,6 +1285,7 @@ function showMapConquestScreen() {
     document.getElementById('mc-nextsub').textContent = 'Três cidades. Uma família. O mundo é seu.';
     document.getElementById('mc-nextbtn').textContent = '🎖️ VITÓRIA TOTAL';
     document.getElementById('mc-nextbtn').onclick = () => {
+      BOSS_STATE.acknowledged=true;
       document.getElementById('map-conquest').style.display='none';
       GS.won=true;
       GS.paused=true;
@@ -1280,12 +1300,14 @@ function showMapConquestScreen() {
     document.getElementById('mc-nextsub').textContent = next.subtitle+' — '+next.story.slice(0,70)+'...';
     document.getElementById('mc-nextbtn').textContent = '✈️ PARTIR PARA '+next.name.toUpperCase();
     document.getElementById('mc-nextbtn').onclick = () => {
+      BOSS_STATE.acknowledged=true;
       document.getElementById('map-conquest').style.display='none';
       transitionToMap(nextId);
     };
   }
 
   document.getElementById('mc-staybtn').onclick = () => {
+    BOSS_STATE.acknowledged=true;
     document.getElementById('map-conquest').style.display='none';
     GS.paused=false;
     showMsg('🏙️ Território conquistado — exploração livre. Pressione N quando quiser viajar.','s');
@@ -1551,12 +1573,98 @@ function checkDistricts() { for (const d of DIST) { const ps=PROPS.filter(p=>p.d
 function playerDists() { return DIST.filter(d=>d.owner==='player').length; }
 let _lastPlayerDists = 0;
 let _conquestTriggered = false;
+
+const FAMILY_BOSSES=[
+  {id:'barzini',name:'Don Vittorio Barzini',title:'Chefe da Família Barzini',icon:'🌹',hp:950,speed:.92,dmg:16,rewardMoney:25000,rewardRespect:1400},
+  {id:'tattaglia',name:'Don Salvatore Tattaglia',title:'Chefe da Família Tattaglia',icon:'🦅',hp:1450,speed:1.02,dmg:20,rewardMoney:45000,rewardRespect:2200},
+  {id:'stracci',name:'Don Emilio Stracci',title:'Chefe da Família Stracci',icon:'♠️',hp:2050,speed:1.10,dmg:25,rewardMoney:80000,rewardRespect:3500}
+];
+const BOSS_STATE={active:false,defeated:false,acknowledged:false,mapId:-1,bossId:null,boss:null,phase:0};
+function resetBossState(){
+  BOSS_STATE.active=false;BOSS_STATE.defeated=false;BOSS_STATE.acknowledged=false;BOSS_STATE.mapId=-1;BOSS_STATE.bossId=null;BOSS_STATE.boss=null;BOSS_STATE.phase=0;
+  document.getElementById('boss-hud')?.classList.remove('on');
+}
+function bossDef(){return FAMILY_BOSSES[currentMapId]||FAMILY_BOSSES[0];}
+function updateBossHUD(){
+  const hud=document.getElementById('boss-hud'),b=BOSS_STATE.boss;
+  if(!hud)return;
+  if(!BOSS_STATE.active||!b||b.hp<=0){hud.classList.remove('on');return;}
+  const def=bossDef(),pct=Math.max(0,Math.min(100,b.hp/Math.max(1,b.maxHp)*100));
+  hud.classList.add('on');
+  document.getElementById('boss-name').textContent=def.icon+' '+def.name.toUpperCase();
+  document.getElementById('boss-phase').textContent='FASE '+(BOSS_STATE.phase+1);
+  document.getElementById('boss-bar').style.width=pct+'%';
+  document.getElementById('boss-hp').textContent=Math.ceil(b.hp)+' / '+Math.ceil(b.maxHp)+' HP';
+  document.getElementById('boss-dist').textContent=Math.round(Math.hypot(b.x-P.x,b.y-P.y))+'m';
+}
+function bossWaypoint(){const b=BOSS_STATE.boss;return BOSS_STATE.active&&b?{x:b.x,y:b.y,name:'CHEFE · '+bossDef().name}:null;}
+function startFamilyBossBattle(){
+  if(BOSS_STATE.active||BOSS_STATE.defeated||GS.gameOver||GS.won)return;
+  const def=bossDef(),anchor=PROPS[11]||PROPS[PROPS.length-1]||{x:CFG.WW*.72,y:CFG.WH*.62};
+  const fp=findFreePoint(anchor.x+S(95),anchor.y+S(105),32,300);
+  ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;BULLETS.length=0;
+  GS.heat=0;GS.stars=0;GS.wantedTimer=0;GS.wantedClearing=false;
+  CITY_LIFE.event=null;CITY_LIFE.eventTimer=60000;
+  const maxHp=Math.round(def.hp*(1+currentMapId*.10));
+  const b={x:fp.x,y:fp.y,hp:maxHp,maxHp,type:'heavy',angle:0,sTimer:450,specialTimer:2600,summonTimer:7000,alertDist:9999,state:'boss',wf:0,wt:0,navSeed:1,stun:0,isBoss:true,bossId:def.id};
+  ENEMIES.push(b);
+  BOSS_STATE.active=true;BOSS_STATE.defeated=false;BOSS_STATE.acknowledged=false;BOSS_STATE.mapId=currentMapId;BOSS_STATE.bossId=def.id;BOSS_STATE.boss=b;BOSS_STATE.phase=0;
+  for(let i=0;i<2+currentMapId;i++){const a=(i/(2+currentMapId))*Math.PI*2,sp=findFreePoint(fp.x+Math.cos(a)*105,fp.y+Math.sin(a)*105,17,120);spawnEnemy(sp.x,sp.y,1);}
+  showMsg('👑 '+def.name+' entrou em campo! Derrote o chefe para conquistar '+MAP_DEFS[currentMapId].name+'.','d');
+  setTimeout(()=>showMsg('🎯 O GPS marcou a posição do chefe da família rival.','i'),1200);
+  updateBossHUD();saveGame();
+}
+function bossRadialBurst(b,phase,def){
+  const n=8+phase*3,spd=CFG.BSPEED*(.62+phase*.05);
+  for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2+(performance.now()*.0004);BULLETS.push({x:b.x,y:b.y,px:b.x,py:b.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,dist:0,owner:'enemy',dmg:def.dmg*(.62+phase*.09),range:520});}
+  spawnMuzzleFx(b.x,b.y,b.angle,2,'enemy');addScreenShake(3+phase);
+}
+function updateFamilyBoss(b,dt){
+  if(!BOSS_STATE.active||b.hp<=0)return;
+  const def=bossDef(),ratio=b.hp/b.maxHp,newPhase=ratio>0.66?0:ratio>0.33?1:2;
+  if(newPhase!==BOSS_STATE.phase){
+    BOSS_STATE.phase=newPhase;b.specialTimer=900;b.summonTimer=2200;
+    showMsg(newPhase===1?'⚠️ '+def.name+' ficou mais agressivo!':'🔥 '+def.name+' entrou na fase final!','d');
+    spawnExplosion(b.x,b.y,.55+newPhase*.12);
+  }
+  const dx=P.x-b.x,dy=P.y-b.y,dist=Math.hypot(dx,dy);b.angle=Math.atan2(dy,dx);
+  const desired=[255,220,175][BOSS_STATE.phase],moveSpeed=CFG.ESPEED*def.speed*(1+BOSS_STATE.phase*.20);
+  if(dist>desired+25)moveTowardWorld(b,P.x,P.y,moveSpeed,dt,actorBodyRadius(b),b.navSeed);
+  else if(BOSS_STATE.phase>=1&&dist<desired-55)moveTowardWorld(b,b.x-(P.x-b.x),b.y-(P.y-b.y),moveSpeed*.72,dt,actorBodyRadius(b),b.navSeed);
+  b.wt+=dt;if(b.wt>105){b.wf=(b.wf+1)%6;b.wt=0;}
+  b.sTimer-=dt;
+  if(b.sTimer<=0&&dist<520&&!worldLineBlocked(b.x,b.y,P.x,P.y,5)){
+    const shots=[1,3,5][BOSS_STATE.phase],spread=[.05,.18,.27][BOSS_STATE.phase];
+    for(let i=0;i<shots;i++)fireAt(b.x,b.y,'enemy',P.x,P.y,{spread,dmg:def.dmg*(1+BOSS_STATE.phase*.12),range:620});
+    b.sprShoot=220;b.sTimer=[760,620,490][BOSS_STATE.phase];
+  }
+  b.specialTimer-=dt;
+  if(b.specialTimer<=0&&dist<580){bossRadialBurst(b,BOSS_STATE.phase,def);b.specialTimer=[4200,3300,2550][BOSS_STATE.phase];}
+  b.summonTimer-=dt;
+  if(b.summonTimer<=0){
+    const minions=ENEMIES.filter(e=>!e.isBoss).length;
+    if(minions<5+BOSS_STATE.phase){const add=1+BOSS_STATE.phase+currentMapId;spawnEnemy(b.x+(Math.random()-.5)*140,b.y+(Math.random()-.5)*140,add);showMsg('🔴 Reforços de '+MAP_DEFS[currentMapId].rival+' chegaram!','d');}
+    b.summonTimer=[10000,8200,6500][BOSS_STATE.phase];
+  }
+  updateBossHUD();
+}
+function finishFamilyBoss(dead){
+  if(!dead?.isBoss||BOSS_STATE.defeated)return;
+  const def=bossDef();BOSS_STATE.active=false;BOSS_STATE.defeated=true;BOSS_STATE.boss=null;
+  document.getElementById('boss-hud')?.classList.remove('on');
+  for(const e of ENEMIES)if(!e.isBoss)spawnDeathAnim('enemy',e);
+  ENEMIES.length=0;RIVALS.length=0;BULLETS.length=0;
+  GS.addMoney(def.rewardMoney);GS.addRespect(def.rewardRespect);P.heal(Math.min(45,P.maxHp-P.hp));
+  showMsg('👑 '+def.name+' foi derrotado! +$'+def.rewardMoney.toLocaleString('pt-BR')+' · +'+def.rewardRespect+' respeito','s');
+  addScreenShake(8);saveGame();
+  setTimeout(()=>{if(!GS.gameOver&&!GS.won)showMapConquestScreen();},1800);
+}
 function checkConquest() {
   const pd = playerDists();
   if(pd===6 && !_conquestTriggered && !GS.won && !GS.gameOver) {
     _conquestTriggered = true;
     _lastPlayerDists = 6;
-    setTimeout(()=>showMapConquestScreen(), 1500);
+    setTimeout(()=>startFamilyBossBattle(),1200);
   }
   _lastPlayerDists = pd;
 }
@@ -2154,7 +2262,8 @@ function performMelee(){
     const x=a.x,y=a.y;
     spawnDeathAnim(best.kind==='police'?'police':'enemy',a);
     best.arr.splice(best.i,1);GS.killCount++;
-    if(best.kind==='enemy'){GS.addMoney(80);GS.addHeat(CFG.HEAT_KILL);addKillCombo(x,y,1);misEvent('kill');}
+    if(a.isBoss){finishFamilyBoss(a);}
+    else if(best.kind==='enemy'){GS.addMoney(80);GS.addHeat(CFG.HEAT_KILL);addKillCombo(x,y,1);misEvent('kill');}
     else if(best.kind==='rival'){GS.addMoney(120);GS.addRespect(80);GS.addHeat(CFG.HEAT_KILL*.5);addKillCombo(x,y,2);misEvent('rival_kill');}
     else{GS.addHeat(CFG.HEAT_KILL*2);GS.policeKills++;addKillCombo(x,y,0);misEvent('police_kill');}
   }
@@ -2272,6 +2381,7 @@ function spawnEnemy(x,y,n,type) {
 }
 function updateEnemies(dt) {
   for (const e of ENEMIES) {
+    if(e.isBoss){updateFamilyBoss(e,dt);continue;}
     const st=ENEMY_TYPES[e.type]||ENEMY_TYPES.grunt;
     if(e.stun>0){e.stun-=dt;continue;}
     const dx=P.x-e.x,dy=P.y-e.y,dist=Math.hypot(dx,dy);
@@ -2305,6 +2415,7 @@ function initRivals() {
   for (const p of PROPS) { const d=DIST.find(d=>d.id===p.dist); if(d&&d.owner==='rival') spawnRivalAt(p.x,p.y); }
 }
 function updateRivals(dt) {
+  if(BOSS_STATE.active){RIVALS.length=0;return;}
   rivalPower = Math.min(500, rivalPower+0.005*dt);
   rivalThink -= dt;
   if (rivalThink<=0) {
@@ -2563,9 +2674,9 @@ function updateBullets(dt) {
           if(zone==='head')showCombatText(ENEMIES[j].x,ENEMIES[j].y-42,'HEADSHOT!','#ffd54a');
           if (ENEMIES[j].hp<=0) { 
             const ex=ENEMIES[j].x, ey=ENEMIES[j].y;
-            const dead=ENEMIES[j]; ENEMIES.splice(j,1); spawnDeathAnim('enemy',dead); GS.addMoney(zone==='head'?100:80); GS.addHeat(CFG.HEAT_KILL); GS.killCount++;
-            addKillCombo(ex, ey, 1);
-            misEvent('kill'); 
+            const dead=ENEMIES[j]; ENEMIES.splice(j,1); spawnDeathAnim('enemy',dead); GS.killCount++;
+            if(dead.isBoss){finishFamilyBoss(dead);}
+            else{GS.addMoney(zone==='head'?100:80); GS.addHeat(CFG.HEAT_KILL);addKillCombo(ex, ey, 1);misEvent('kill');}
           }
           hit=true; break;
         }
@@ -3376,7 +3487,8 @@ function resolveStreetEvent(ev){if(ev.triggered)return;ev.triggered=true;if(ev.t
   else if(ev.type==='ammo'){for(let i=0;i<WEAPONS.length;i++){const w=WEAPONS[i];if(!weaponOwned[i]||w.ammo===-1)continue;w.ammo=Math.min(w.maxAmmo,w.ammo+Math.max(4,Math.round(w.maxAmmo*.35)));}renderWeaponHUD();showMsg('📦 Munição recuperada.','s');showCombatText(ev.x,ev.y-22,'MUNIÇÃO','#b7dcff');}
   else{const n=2+currentMapId;for(let i=0;i<n;i++){const a=i/n*Math.PI*2,fp=findFreePoint(ev.x+Math.cos(a)*90,ev.y+Math.sin(a)*90,17,100);spawnRivalAt(fp.x,fp.y);}showMsg('🔴 EMBOSCADA! Rivais cercaram a área.','d');disturbCity(ev.x,ev.y,650,1800);}CITY_LIFE.eventTimer=45000+Math.random()*30000;setTimeout(()=>{if(CITY_LIFE.event===ev)CITY_LIFE.event=null;},600);}
 function updateCityLife(dt){ensureCityLife();const now=performance.now(),roads=lifeRoads();
-  CITY_LIFE.eventTimer-=dt;if(CITY_LIFE.eventTimer<=0&&!CITY_LIFE.event)spawnStreetEvent();
+  if(BOSS_STATE.active){CITY_LIFE.event=null;CITY_LIFE.eventTimer=Math.max(CITY_LIFE.eventTimer,30000);}
+  else{CITY_LIFE.eventTimer-=dt;if(CITY_LIFE.eventTimer<=0&&!CITY_LIFE.event)spawnStreetEvent();}
   if(CITY_LIFE.event){CITY_LIFE.event.life-=dt;if(CITY_LIFE.event.life<=0){CITY_LIFE.event=null;CITY_LIFE.eventTimer=30000+Math.random()*25000;}else if(Math.hypot(CITY_LIFE.event.x-P.x,CITY_LIFE.event.y-P.y)<46)resolveStreetEvent(CITY_LIFE.event);}
   for(const v of CITY_LIFE.traffic){v.hitCd=Math.max(0,v.hitCd-dt);const r=roads[v.road];if(!r){recycleTraffic(v);continue;}let fac=1;const dp=Math.hypot(v.x-P.x,v.y-P.y);if(!GS.inCar&&dp<85)fac=dp<40?0:.2;else if(GS.inCar&&dp<45){fac=.15;if(v.hitCd<=0&&Math.abs(CAR.speed)>1.2){CAR.takeDmg(3);CAR.speed*=.72;v.hitCd=700;addScreenShake(2.2);}}
     v.speed+=(v.baseSpeed*fac-v.speed)*Math.min(1,dt*.006);const len=Math.max(1,Math.hypot(r[2]-r[0],r[3]-r[1]));v.t+=v.dir*(v.speed*dt/len);if(v.t<-.04||v.t>1.04){recycleTraffic(v);continue;}const p=roadPose(r,v.t,v.lane);v.x=p.x;v.y=p.y;v.angle=p.angle+(v.dir<0?Math.PI:0);}
@@ -3735,7 +3847,7 @@ function drawEnemy(x,y,angle,hp,maxHp,type,wf,entity){
   const row = spriteActionRow(action);
   const frame = action==='shoot' ? Math.min(5, Math.floor((180-Math.max(0,entity?.sprShoot||0))/30)) : ((wf||0)%6 || sprLoopFrame(action==='run'?95:130,6,(x+y)%300));
   const cfg=SPR_CFG[isR?'rival':(type||'enemy')]||SPR_CFG.enemy;
-  if(drawSpriteFrame(SPRITES.enemy,row,frame,x,y,angle,{scale:cfg.scale,anchorY:cfg.anchorY,crop:cfg.crop,shadowW:isH?13:12})){ 
+  if(drawSpriteFrame(SPRITES.enemy,row,frame,x,y,angle,{scale:cfg.scale*(entity?.isBoss?1.28:1),anchorY:cfg.anchorY,crop:cfg.crop,shadowW:entity?.isBoss?17:(isH?13:12)})){ 
     if(hp<maxHp){const bw=34,bh=4,bx=x-bw/2,by=y-60;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle=isR?'#cc2222':'#ff4444';ctx.fillRect(bx,by,bw*(hp/maxHp),bh);} 
     if(isH||isRush||isMarks){ctx.fillStyle=isH?'#d4af37':isRush?'#ff9a45':'#75d6e8';ctx.font='bold 8px Cinzel,serif';ctx.textAlign='center';ctx.fillText(isH?'H':isRush?'R':'M',x,y-52);} 
     return;}
@@ -3830,6 +3942,7 @@ function nearestSafeTarget(){
   return zones[0]||null;
 }
 function getMissionWaypoint(){
+  const bw=bossWaypoint();if(bw)return bw;
   if(!activeMis)return null;
   let p=null;
   switch(activeMis.id){
@@ -3973,6 +4086,7 @@ function loop(ts) {
   // Enemies
   for(const e of ENEMIES){
     drawEnemy(e.x,e.y,e.angle,e.hp,e.maxHp,e.type,e.wf,e);
+    if(e.isBoss){ctx.save();ctx.textAlign='center';ctx.font='24px serif';ctx.shadowColor='rgba(255,195,55,.75)';ctx.shadowBlur=12;ctx.fillText('👑',e.x,e.y-78);ctx.shadowBlur=0;ctx.restore();}
     if(e.state==='chase'){ctx.fillStyle='rgba(255,220,0,.85)';ctx.font='bold 14px serif';ctx.textAlign='center';ctx.shadowColor='rgba(255,200,0,.6)';ctx.shadowBlur=7;ctx.fillText('!',e.x,e.y-66);ctx.shadowBlur=0;}
     if(dbg){ctx.strokeStyle='rgba(255,0,0,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(e.x,e.y,actorBodyRadius(e),0,Math.PI*2);ctx.stroke();}
   }
@@ -4085,7 +4199,7 @@ const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function saveGame() {
   const data = {
-    ver: 15,
+    ver: 16,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4101,7 +4215,8 @@ function saveGame() {
     gameMinutes, minimapVisible,
     rivalPower, rivalThink,
     police:POLICE.map(p=>({x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,angle:p.angle,sTimer:p.sTimer,carHitCd:p.carHitCd||0,id:p.id,lastSeenX:p.lastSeenX,lastSeenY:p.lastSeenY,searchTimer:p.searchTimer,hasVisual:p.hasVisual})),
-    enemies:ENEMIES.map(e=>({x:e.x,y:e.y,hp:e.hp,maxHp:e.maxHp,type:e.type,angle:e.angle,sTimer:e.sTimer,alertDist:e.alertDist,state:e.state,wf:e.wf,wt:e.wt,navSeed:e.navSeed,stun:e.stun||0})),
+    enemies:ENEMIES.map(e=>({x:e.x,y:e.y,hp:e.hp,maxHp:e.maxHp,type:e.type,angle:e.angle,sTimer:e.sTimer,alertDist:e.alertDist,state:e.state,wf:e.wf,wt:e.wt,navSeed:e.navSeed,stun:e.stun||0,isBoss:!!e.isBoss,bossId:e.bossId||null,specialTimer:e.specialTimer||0,summonTimer:e.summonTimer||0})),
+    bossState:{active:BOSS_STATE.active,defeated:BOSS_STATE.defeated,acknowledged:BOSS_STATE.acknowledged,mapId:BOSS_STATE.mapId,bossId:BOSS_STATE.bossId,phase:BOSS_STATE.phase},
     rivals:RIVALS.map(r=>({x:r.x,y:r.y,hp:r.hp,maxHp:r.maxHp,angle:r.angle,sTimer:r.sTimer,state:r.state,ptx:r.ptx,pty:r.pty,home:r.home,alertDist:r.alertDist,captureTimer:r.captureTimer||0,raidTargetId:r.raidTarget?r.raidTarget.id:null})),
     healthPacks:HEALTH_PACKS.map(h=>({...h})),
 
@@ -4130,7 +4245,7 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15].includes(data.ver)) return false;
+    if(!data || ![7,8,9,10,11,12,13,14,15,16].includes(data.ver)) return false;
 
     // Load map first (resets everything cleanly)
     loadMap(data.mapId);
@@ -4203,6 +4318,13 @@ function loadGame() {
       }
       if(Array.isArray(data.healthPacks)){HEALTH_PACKS.length=0;for(const h of data.healthPacks)HEALTH_PACKS.push({...h,x:h.x*legacyScale,y:h.y*legacyScale});}
     }
+    if(data.ver>=16&&data.bossState){
+      BOSS_STATE.active=!!data.bossState.active;BOSS_STATE.defeated=!!data.bossState.defeated;BOSS_STATE.acknowledged=!!data.bossState.acknowledged;BOSS_STATE.mapId=Number.isFinite(data.bossState.mapId)?data.bossState.mapId:currentMapId;BOSS_STATE.bossId=data.bossState.bossId||null;BOSS_STATE.phase=data.bossState.phase||0;
+      BOSS_STATE.boss=ENEMIES.find(e=>e.isBoss)||null;
+      if(BOSS_STATE.active&&!BOSS_STATE.boss){BOSS_STATE.active=false;BOSS_STATE.defeated=false;_conquestTriggered=false;}
+      else if(BOSS_STATE.active){_conquestTriggered=true;updateBossHUD();}
+      else if(BOSS_STATE.defeated){_conquestTriggered=true;document.getElementById('boss-hud')?.classList.remove('on');}
+    }
 
     // Recalc derived state. Property guards first, then safehouse guards so neither list erases the other.
     recalcIncome();
@@ -4214,6 +4336,7 @@ function loadGame() {
     misBanner();
     updateHUD();
     const mmw=document.getElementById('minimap-wrap');if(mmw)mmw.classList.toggle('off',!minimapVisible);
+    if(BOSS_STATE.defeated&&!BOSS_STATE.acknowledged&&playerDists()===6)setTimeout(()=>showMapConquestScreen(),650);
 
     return true;
   } catch(e) {
@@ -4226,7 +4349,7 @@ function deleteSave() {
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem(SAVE_BACKUP_KEY);
 }
-function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return d&&[7,8,9,10,11,12,13,14,15].includes(d.ver)?d:null;}catch(e){return null;}}
+function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return d&&[7,8,9,10,11,12,13,14,15,16].includes(d.ver)?d:null;}catch(e){return null;}}
 function restoreBackupSave(){const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw||!hasBackupSave())return false;const current=localStorage.getItem(SAVE_KEY);localStorage.setItem(SAVE_KEY,raw);if(current){try{const d=JSON.parse(current);if(d&&d.ver)localStorage.setItem(SAVE_BACKUP_KEY,current);}catch(e){}}return true;}
 
 function hasSave() {
@@ -4234,7 +4357,7 @@ function hasSave() {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return null;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15].includes(data.ver)) return null;
+    if(!data || ![7,8,9,10,11,12,13,14,15,16].includes(data.ver)) return null;
     return data;
   } catch(e) { return null; }
 }
@@ -4315,7 +4438,7 @@ function bindSetting(id,key,kind='bool'){
   el.addEventListener('input',()=>{if(kind==='bool')GAME_SETTINGS[key]=!!el.checked;else if(kind==='range')GAME_SETTINGS[key]=Number(el.value)/100;else GAME_SETTINGS[key]=el.value;saveSettings();syncSettingsUI();if(key==='quality'&&gameSessionStarted&&!mainMenuActive){CITY_LIFE.map=-1;}if(kind==='range'||key==='audioEnabled')playSfx('ui',.35);});
 }
 function exportSave(){const raw=localStorage.getItem(SAVE_KEY);if(!raw){alert('Nenhum save para exportar.');return;}const blob=new Blob([raw],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='godfather-save-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);playSfx('save',.6);}
-function importSaveFile(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));if(!obj||![7,8,9,10,11,12,13,14,15].includes(obj.ver))throw new Error('Versão incompatível');localStorage.setItem(SAVE_KEY,JSON.stringify(obj));updateMainMenuSaveUI();alert('Save importado com sucesso.');playSfx('save',.7);}catch(e){alert('Não foi possível importar este save: '+e.message);}};r.readAsText(file);}
+function importSaveFile(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));if(!obj||![7,8,9,10,11,12,13,14,15,16].includes(obj.ver))throw new Error('Versão incompatível');localStorage.setItem(SAVE_KEY,JSON.stringify(obj));updateMainMenuSaveUI();alert('Save importado com sucesso.');playSfx('save',.7);}catch(e){alert('Não foi possível importar este save: '+e.message);}};r.readAsText(file);}
 
 loadSettings();applySettings();syncSettingsUI();
 enterMainMenuState();
