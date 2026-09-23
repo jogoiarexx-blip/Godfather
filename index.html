@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.5</title>
+<title>Godfather Web Edition v8.6</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -405,7 +405,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.5</h2>
+      <h2>🗺 ROADMAP v8.6</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -430,7 +430,8 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.3 — Menu completo, storage visível, áudio e gráficos configuráveis</b></div>
         <div class="rmap-item done">✅ <b>v8.4 — Pause menu, backup automático, culling e diagnóstico de FPS</b></div>
         <div class="rmap-item done">✅ <b>v8.5 — Chefes de família, batalha final por cidade e campanha expandida</b></div>
-        <div class="rmap-item pend">🔜 v8.6 — Veículos, perseguições e missões de história avançadas</div>
+        <div class="rmap-item done">✅ <b>v8.6 — Viaturas, carros rivais, bloqueios policiais e campanhas por cidade</b></div>
+        <div class="rmap-item pend">🔜 v8.7 — Veículos dirigíveis adicionais, garagem e customização</div>
       </div>
     </div>
   </div>
@@ -441,7 +442,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.5 · CHEFES & CAMPANHA</div>
+      <div class="ssub">WEB EDITION — v8.6 · PERSEGUIÇÕES & OPERAÇÕES</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -500,7 +501,7 @@ body.menu-active #fps-counter{display:none!important}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.5</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.6</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
@@ -1149,7 +1150,7 @@ const MAP_DEFS = [
 function loadMap(mapId) {
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
-  resetBossState();
+  resetBossState();resetPursuitSystem();
 
   // Reset world arrays
   ENEMIES.length=0; RIVALS.length=0; POLICE.length=0; GUARDS.length=0;
@@ -1235,7 +1236,7 @@ function loadMap(mapId) {
 async function loadMapReal(mapId){
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
-  resetBossState();
+  resetBossState();resetPursuitSystem();
   await cityLoadStep(6,'LIMPANDO','Encerrando a cidade anterior...',()=>{ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;GUARDS.length=0;PROP_GUARDS.length=0;SAFEHOUSES.length=0;BULLETS.length=0;PARTS.length=0;FX.length=0;HEALTH_PACKS.length=0;COMBAT_TEXT.length=0;DEATH_ANIMS.length=0;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;reloadTimer=0;reloadWeapon=-1;recoilKick=0;meleeCD=0;meleeSwing=0;_winCache.clear();});
   await cityLoadStep(18,'DISTRITOS','Aplicando território, distritos e negócios...',()=>{
     DIST.length=0; for(const d of def.districts) DIST.push({...d,x:S(d.x),y:S(d.y),w:S(d.w),h:S(d.h)});
@@ -1656,6 +1657,7 @@ function finishFamilyBoss(dead){
   ENEMIES.length=0;RIVALS.length=0;BULLETS.length=0;
   GS.addMoney(def.rewardMoney);GS.addRespect(def.rewardRespect);P.heal(Math.min(45,P.maxHp-P.hp));
   showMsg('👑 '+def.name+' foi derrotado! +$'+def.rewardMoney.toLocaleString('pt-BR')+' · +'+def.rewardRespect+' respeito','s');
+  misEvent('boss_kill');
   addScreenShake(8);saveGame();
   setTimeout(()=>{if(!GS.gameOver&&!GS.won)showMapConquestScreen();},1800);
 }
@@ -2137,6 +2139,9 @@ const CAR = {
     const mx=Math.cos(this.angle)*this.speed*sc,my=Math.sin(this.angle)*this.speed*sc;
     const directBlocked=collidesWorld(this.x+mx,this.y+my,24);
     moveEntityWorld(this,mx,my,24);
+    if(GS.inCar&&Math.abs(this.speed)>2.2){
+      for(let i=PURSUIT.vehicles.length-1;i>=0;i--){const v=PURSUIT.vehicles[i];if(Math.hypot(this.x-v.x,this.y-v.y)<45&&v.ramCd<=0){const impact=Math.max(8,Math.abs(this.speed)*2.2);if(pursuitVehicleDamage(v,impact)){PURSUIT.vehicles.splice(i,1);}else{v.speed*=-.3;v.ramCd=650;}this.speed*=.68;this.takeDmg(Math.max(2,impact*.18));addScreenShake(3.5);break;}}
+    }
     if(directBlocked&&Math.abs(this.speed)>2.5){
       if(this.crashCd<=0){
         const impact=Math.min(18,Math.max(3,Math.abs(this.speed)*1.4));
@@ -2151,6 +2156,103 @@ const CAR = {
     if (this.hp<=0) { this.hp=0; GS.inCar=false; P.takeDmg(25); spawnExplosion(this.x,this.y,1.5); showMsg('💥 Carro destruído!','d'); setTimeout(()=>{this.hp=this.maxHp;showMsg('🚗 Carro reparado.','i');},8000); }
   },
 };
+
+// ══════════════════════════════════════════════════════════════════════
+// VEHICLE PURSUITS / ROADBLOCKS — v8.6
+// ══════════════════════════════════════════════════════════════════════
+const PURSUIT={vehicles:[],roadblocks:[],policeTimer:0,rivalTimer:9000,roadblockTimer:12000,serial:1};
+function resetPursuitSystem(){PURSUIT.vehicles.length=0;PURSUIT.roadblocks.length=0;PURSUIT.policeTimer=0;PURSUIT.rivalTimer=8000+Math.random()*5000;PURSUIT.roadblockTimer=10000+Math.random()*5000;}
+function pursuitSpawnPoint(minD=520,maxD=980){
+  const roads=lifeRoads();
+  for(let tries=0;tries<28;tries++){
+    const ri=Math.floor(Math.random()*roads.length),r=roads[ri],t=.08+Math.random()*.84,lane=(Math.random()<.5?-1:1)*Math.min(16,r[4]*.16),p=roadPose(r,t,lane),d=Math.hypot(p.x-P.x,p.y-P.y);
+    if(d>=minD&&d<=maxD&&!collidesWorld(p.x,p.y,24))return{x:p.x,y:p.y,angle:p.angle,road:ri};
+  }
+  const fp=findFreePoint(P.x+Math.cos(P.angle+Math.PI)*minD,P.y+Math.sin(P.angle+Math.PI)*minD,24,500);
+  return{x:fp.x,y:fp.y,angle:P.angle,road:-1};
+}
+function spawnPursuitVehicle(kind='police'){
+  const p=pursuitSpawnPoint(),maxHp=kind==='police'?150+GS.stars*12:175+currentMapId*28;
+  PURSUIT.vehicles.push({id:PURSUIT.serial++,kind,x:p.x,y:p.y,angle:p.angle,speed:0,hp:maxHp,maxHp,ramCd:0,life:30000,navSeed:Math.random()<.5?0:1});
+  if(kind==='police')showMsg('🚔 Viatura entrou na perseguição!','d');
+  else showMsg('🔴 Carro de '+MAP_DEFS[currentMapId].rival+' está no seu encalço!','d');
+}
+function spawnRoadblock(){
+  if(PURSUIT.roadblocks.length>=2)return;
+  const roads=WORLD_ROADS_MAIN;
+  let best=null;
+  for(let tries=0;tries<24;tries++){
+    const r=roads[Math.floor(Math.random()*roads.length)],t=.16+Math.random()*.68,p=roadPose(r,t,0),d=Math.hypot(p.x-P.x,p.y-P.y);
+    if(d>380&&d<850){best={x:p.x,y:p.y,angle:p.angle,width:r[4],life:24000,hitCd:0};break;}
+  }
+  if(!best)return;
+  PURSUIT.roadblocks.push(best);showMsg('🚧 BLOQUEIO POLICIAL montado à frente!','d');
+}
+function pursuitVehicleDamage(v,dmg){
+  v.hp-=dmg;if(v.hp>0)return false;
+  spawnExplosion(v.x,v.y,.85);showCombatText(v.x,v.y-25,v.kind==='police'?'VIATURA FORA':'CARRO RIVAL FORA','#ffd26a');
+  if(v.kind==='police')GS.addHeat(8);else{GS.addMoney(250+currentMapId*150);GS.addRespect(35+currentMapId*20);}
+  return true;
+}
+function updatePursuitVehicles(dt){
+  if(INTERIOR.active||BOSS_STATE.active){resetPursuitSystem();return;}
+  PURSUIT.policeTimer-=dt;PURSUIT.rivalTimer-=dt;PURSUIT.roadblockTimer-=dt;
+  if(GS.inCar&&GS.stars>=3&&PURSUIT.policeTimer<=0){
+    const cap=GS.stars>=5?3:GS.stars>=4?2:1;
+    if(PURSUIT.vehicles.filter(v=>v.kind==='police').length<cap)spawnPursuitVehicle('police');
+    PURSUIT.policeTimer=Math.max(3800,9000-GS.stars*900);
+  }
+  if(GS.inCar&&!BOSS_STATE.defeated&&playerDists()>=2&&PURSUIT.rivalTimer<=0){
+    if(PURSUIT.vehicles.filter(v=>v.kind==='rival').length<1+(currentMapId>0?1:0)&&Math.random()<.72)spawnPursuitVehicle('rival');
+    PURSUIT.rivalTimer=15000+Math.random()*12000;
+  }
+  if(GS.inCar&&GS.stars>=4&&PURSUIT.roadblockTimer<=0){spawnRoadblock();PURSUIT.roadblockTimer=17000+Math.random()*9000;}
+  for(let i=PURSUIT.vehicles.length-1;i>=0;i--){
+    const v=PURSUIT.vehicles[i];v.life-=dt;v.ramCd=Math.max(0,v.ramCd-dt);
+    if(v.kind==='police'&&(GS.stars<3||GS.inSafe)){PURSUIT.vehicles.splice(i,1);continue;}
+    if(v.life<=0||Math.hypot(v.x-P.x,v.y-P.y)>1800){PURSUIT.vehicles.splice(i,1);continue;}
+    const tx=GS.inCar?CAR.x:P.x,ty=GS.inCar?CAR.y:P.y,desired=Math.atan2(ty-v.y,tx-v.x),diff=((desired-v.angle+Math.PI*3)%(Math.PI*2))-Math.PI;
+    v.angle+=Math.max(-.055,Math.min(.055,diff))*(dt/16);
+    const top=v.kind==='police'?(6.5+GS.stars*.55):(6.7+currentMapId*.65),acc=.22*(dt/16);
+    v.speed=Math.min(top,v.speed+acc);
+    const ox=v.x,oy=v.y;moveEntityWorld(v,Math.cos(v.angle)*v.speed*(dt/16),Math.sin(v.angle)*v.speed*(dt/16),23);
+    if(Math.hypot(v.x-ox,v.y-oy)<.12){v.angle+=.55*(v.navSeed?1:-1);v.navSeed=1-v.navSeed;v.speed*=.72;}
+    const d=Math.hypot(v.x-tx,v.y-ty);
+    if(v.ramCd<=0&&d<48){
+      if(GS.inCar){const hit=v.kind==='police'?7+GS.stars:9+currentMapId*2;CAR.takeDmg(hit);CAR.speed*=.72;addScreenShake(4);spawnSpark(CAR.x,CAR.y);}
+      else{P.takeDmg(v.kind==='police'?12:15);const a=Math.atan2(P.y-v.y,P.x-v.x);moveEntityWorld(P,Math.cos(a)*24,Math.sin(a)*24,13);}
+      v.speed*=-.28;v.ramCd=850;
+    }
+  }
+  for(let i=PURSUIT.roadblocks.length-1;i>=0;i--){
+    const b=PURSUIT.roadblocks[i];b.life-=dt;b.hitCd=Math.max(0,b.hitCd-dt);
+    if(b.life<=0||GS.stars<3){PURSUIT.roadblocks.splice(i,1);continue;}
+    if(GS.inCar&&b.hitCd<=0&&Math.hypot(CAR.x-b.x,CAR.y-b.y)<Math.max(48,b.width*.36)){
+      CAR.takeDmg(14+GS.stars*2);CAR.speed*=-.34;b.hitCd=1200;addScreenShake(7);spawnSpark(CAR.x,CAR.y);showMsg('💥 Você bateu no bloqueio!','d');
+    }
+  }
+}
+function drawPursuitCar(v){
+  if(!inViewPoint(v.x,v.y,100))return;
+  ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.angle);
+  ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(3,5,25,12,0,0,Math.PI*2);ctx.fill();
+  const police=v.kind==='police';ctx.fillStyle=police?'#17264a':'#481515';ctx.beginPath();ctx.roundRect(-25,-11,50,22,6);ctx.fill();
+  ctx.fillStyle=police?'#d6d8d9':'#1b0b0b';ctx.fillRect(-7,-9,17,18);
+  ctx.fillStyle='rgba(100,155,190,.28)';ctx.fillRect(-4,-8,11,16);
+  if(police){const flash=Math.floor(Date.now()/130)%2;ctx.fillStyle=flash?'#ff3c3c':'#365cff';ctx.fillRect(-2,-14,7,4);ctx.fillStyle=flash?'#365cff':'#ff3c3c';ctx.fillRect(5,-14,7,4);}
+  else{ctx.fillStyle='#d4af37';ctx.font='bold 11px Cinzel,serif';ctx.textAlign='center';ctx.fillText('R',0,4);}
+  ctx.restore();
+  if(v.hp<v.maxHp){const w=42;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(v.x-w/2,v.y-26,w,3);ctx.fillStyle=police?'#4d87ff':'#d44738';ctx.fillRect(v.x-w/2,v.y-26,w*v.hp/v.maxHp,3);}
+}
+function drawRoadblock(b){
+  if(!inViewPoint(b.x,b.y,130))return;
+  ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.angle);
+  ctx.fillStyle='rgba(0,0,0,.42)';ctx.fillRect(-b.width*.38,-16,b.width*.76,32);
+  ctx.fillStyle='#e2d7b4';for(let x=-b.width*.32;x<b.width*.32;x+=20){ctx.fillRect(x,-5,12,10);ctx.fillStyle='#d34232';ctx.fillRect(x+12,-5,8,10);ctx.fillStyle='#e2d7b4';}
+  const flash=Math.floor(Date.now()/170)%2;ctx.fillStyle=flash?'#ff4545':'#3e63ff';ctx.fillRect(-b.width*.28,-15,9,5);ctx.fillStyle=flash?'#3e63ff':'#ff4545';ctx.fillRect(b.width*.22,-15,9,5);
+  ctx.restore();
+}
+function drawPursuitSystem(){for(const b of PURSUIT.roadblocks)drawRoadblock(b);for(const v of PURSUIT.vehicles)drawPursuitCar(v);}
 
 // ══════════════════════════════════════════════════════════════════════
 // BULLETS & PARTICLES
@@ -2774,23 +2876,33 @@ const MIS_DEF = [
   {id:4, title:'Fuga do Calor',     desc:'Reduza heat a zero com 3+ estrelas',      rew:{m:4000, r:1000}, unlock:()=>GS.killCount-(misSt.killBase||0)>=15,check:()=>misSt.escaped},
   {id:5, title:'Coração da Cidade', desc:'Tome o Banco no Centro Histórico',        rew:{m:8000, r:1500}, unlock:()=>GS.respect>=800,    check:()=>PROPS[6].owned},
   {id:6, title:'Rei do Cassino',    desc:'Tome o Cassino e o Clube Noturno',        rew:{m:15000,r:2500}, unlock:()=>PROPS[6].owned,     check:()=>PROPS[8].owned&&PROPS[9].owned},
-  {id:7, title:'O Padrinho',        desc:'Domine todos os 6 distritos',             rew:{m:50000,r:5000}, unlock:()=>GS.respect>=4000,   check:()=>playerDists()>=6},
+  {id:7, title:'O Padrinho',        desc:'Domine a cidade e derrote o chefe rival',   rew:{m:50000,r:5000}, unlock:()=>GS.respect>=4000,   check:()=>BOSS_STATE.defeated},
 ];
 const misSt = {escaped:false, hadHeat:false, killBase:0};
 const MIS = MIS_DEF.map(m=>({...m, status:'locked'}));
 let activeMis = null;
 
 function misRefresh() { for(const m of MIS){if(m.status==='completed')continue; if(m.unlock()&&m.status==='locked')m.status='available';} }
+const CITY_CAMPAIGN_TITLES=[
+  ['Cobrança no Cais','Sangue na Doca','Bar dos Barzini','Limpeza do Porto','Ruas em Chamas','Cofre do Centro','Noite de Ouro','O Acerto Barzini'],
+  ['Mercadoria Siciliana','Lei da Omertà','Mercato de Sangue','Varrer Palermo','Fuga pelas Vielas','Cofre dos Tattaglia','Palazzo em Chamas','Queda de Tattaglia'],
+  ['Carga de Chicago','Rajada na Chuva','Clube dos Stracci','Noite Sem Testemunhas','Sirene na Avenida','Dinheiro de Chicago','Jazz e Cassino','Último Ato de Stracci']
+];
 function misRefreshMap() {
   // Every city has its own campaign pass. Loading a save restores the saved statuses afterwards.
-  for(const m of MIS) m.status='locked';
+  const titles=CITY_CAMPAIGN_TITLES[currentMapId]||CITY_CAMPAIGN_TITLES[0],boss=FAMILY_BOSSES[currentMapId]||FAMILY_BOSSES[0],mul=1+currentMapId*.65;
+  for(const m of MIS){m.status='locked';m.title=titles[m.id]||MIS_DEF[m.id].title;m.rew={m:Math.round(MIS_DEF[m.id].rew.m*mul),r:Math.round(MIS_DEF[m.id].rew.r*(1+currentMapId*.35))};}
   activeMis=null;
   document.getElementById('mbar').classList.remove('on');
   misSt.escaped=false; misSt.hadHeat=false; misSt.killBase=GS.killCount;
-  if(MIS[0]&&PROPS[1]) MIS[0].desc='Invada e domine '+PROPS[1].name;
-  if(MIS[2]&&PROPS[2]) MIS[2].desc='Invada e tome '+PROPS[2].name;
-  if(MIS[5]&&PROPS[6]) MIS[5].desc='Invada e tome '+PROPS[6].name;
-  if(MIS[6]&&PROPS[8]&&PROPS[9]) MIS[6].desc='Tome '+PROPS[8].name+' e '+PROPS[9].name;
+  if(MIS[0]&&PROPS[1]) MIS[0].desc='Invada e domine '+PROPS[1].name+' para abrir sua operação em '+MAP_DEFS[currentMapId].name+'.';
+  if(MIS[1]) MIS[1].desc='Elimine 5 capangas de '+MAP_DEFS[currentMapId].rival+'.';
+  if(MIS[2]&&PROPS[2]) MIS[2].desc='Invada e tome '+PROPS[2].name+' da família rival.';
+  if(MIS[3]) MIS[3].desc='Elimine 15 inimigos nesta cidade e enfraqueça a rede rival.';
+  if(MIS[4]) MIS[4].desc='Atinja 3+ estrelas e consiga despistar toda a perseguição.';
+  if(MIS[5]&&PROPS[6]) MIS[5].desc='Invada e tome '+PROPS[6].name+', um ponto estratégico de '+MAP_DEFS[currentMapId].name+'.';
+  if(MIS[6]&&PROPS[8]&&PROPS[9]) MIS[6].desc='Tome '+PROPS[8].name+' e '+PROPS[9].name+' para quebrar a renda rival.';
+  if(MIS[7]) MIS[7].desc='Domine os 6 distritos e derrote '+boss.name+', chefe de '+MAP_DEFS[currentMapId].rival+'.';
   misRefresh();
 }
 function misActivate(id) { const m=MIS.find(x=>x.id===id); if(!m||m.status==='locked'||m.status==='completed')return; activeMis=m; m.status='active'; showMsg('🎯 Missão: '+m.title,'i'); misBanner(); sbClose(); }
@@ -3974,6 +4086,8 @@ function drawMinimap(){
   for(const sh of SAFEHOUSES)if(sh.owned){c.fillStyle='#43d97a';c.fillRect(sh.x*sx-3,sh.y*sy-3,6,6);}
   if(GS.stars>0){for(const p of POLICE){if(Math.hypot(p.x-P.x,p.y-P.y)<700){c.fillStyle='#5c92ff';c.beginPath();c.arc(p.x*sx,p.y*sy,2.8,0,Math.PI*2);c.fill();}}}
   if(CITY_LIFE.event){c.fillStyle=CITY_LIFE.event.type==='ambush'?'#e04a42':CITY_LIFE.event.type==='ammo'?'#78bfff':'#e5c24d';c.beginPath();c.arc(CITY_LIFE.event.x*sx,CITY_LIFE.event.y*sy,3.6,0,Math.PI*2);c.fill();}
+  for(const v of PURSUIT.vehicles){c.fillStyle=v.kind==='police'?'#5b8fff':'#e04a42';c.fillRect(v.x*sx-2.5,v.y*sy-2.5,5,5);}
+  for(const b of PURSUIT.roadblocks){c.strokeStyle='#6a9bff';c.lineWidth=2;c.beginPath();c.moveTo(b.x*sx-5,b.y*sy);c.lineTo(b.x*sx+5,b.y*sy);c.stroke();}
   const wp=getMissionWaypoint();
   if(wp){
     c.strokeStyle='rgba(241,208,92,.42)';c.lineWidth=1.6;c.setLineDash([8,6]);c.beginPath();c.moveTo(P.x*sx,P.y*sy);c.lineTo(wp.x*sx,wp.y*sy);c.stroke();c.setLineDash([]);
@@ -4040,6 +4154,7 @@ function loop(ts) {
       // Safety net for old saves / rare spawn overlaps after map transitions.
       if(!GS.inCar&&collidesWorld(P.x,P.y,13))ensureEntityFree(P,13,120);
       CAR.update(dt);
+      updatePursuitVehicles(dt);
       updateCityLife(dt);
       updateEnemies(dt);
       updateRivals(dt);
@@ -4079,6 +4194,7 @@ function loop(ts) {
 
   drawWorld();
   drawCityLife();
+  drawPursuitSystem();
 
   // Car (behind player)
   if(!GS.inCar) drawCar(CAR.x,CAR.y,CAR.angle);
@@ -4199,7 +4315,7 @@ const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function saveGame() {
   const data = {
-    ver: 16,
+    ver: 17,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4245,7 +4361,7 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15,16].includes(data.ver)) return false;
+    if(!data || ![7,8,9,10,11,12,13,14,15,16,17].includes(data.ver)) return false;
 
     // Load map first (resets everything cleanly)
     loadMap(data.mapId);
@@ -4349,7 +4465,7 @@ function deleteSave() {
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem(SAVE_BACKUP_KEY);
 }
-function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return d&&[7,8,9,10,11,12,13,14,15,16].includes(d.ver)?d:null;}catch(e){return null;}}
+function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return d&&[7,8,9,10,11,12,13,14,15,16,17].includes(d.ver)?d:null;}catch(e){return null;}}
 function restoreBackupSave(){const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw||!hasBackupSave())return false;const current=localStorage.getItem(SAVE_KEY);localStorage.setItem(SAVE_KEY,raw);if(current){try{const d=JSON.parse(current);if(d&&d.ver)localStorage.setItem(SAVE_BACKUP_KEY,current);}catch(e){}}return true;}
 
 function hasSave() {
@@ -4357,7 +4473,7 @@ function hasSave() {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return null;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15,16].includes(data.ver)) return null;
+    if(!data || ![7,8,9,10,11,12,13,14,15,16,17].includes(data.ver)) return null;
     return data;
   } catch(e) { return null; }
 }
@@ -4438,7 +4554,7 @@ function bindSetting(id,key,kind='bool'){
   el.addEventListener('input',()=>{if(kind==='bool')GAME_SETTINGS[key]=!!el.checked;else if(kind==='range')GAME_SETTINGS[key]=Number(el.value)/100;else GAME_SETTINGS[key]=el.value;saveSettings();syncSettingsUI();if(key==='quality'&&gameSessionStarted&&!mainMenuActive){CITY_LIFE.map=-1;}if(kind==='range'||key==='audioEnabled')playSfx('ui',.35);});
 }
 function exportSave(){const raw=localStorage.getItem(SAVE_KEY);if(!raw){alert('Nenhum save para exportar.');return;}const blob=new Blob([raw],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='godfather-save-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);playSfx('save',.6);}
-function importSaveFile(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));if(!obj||![7,8,9,10,11,12,13,14,15,16].includes(obj.ver))throw new Error('Versão incompatível');localStorage.setItem(SAVE_KEY,JSON.stringify(obj));updateMainMenuSaveUI();alert('Save importado com sucesso.');playSfx('save',.7);}catch(e){alert('Não foi possível importar este save: '+e.message);}};r.readAsText(file);}
+function importSaveFile(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));if(!obj||![7,8,9,10,11,12,13,14,15,16,17].includes(obj.ver))throw new Error('Versão incompatível');localStorage.setItem(SAVE_KEY,JSON.stringify(obj));updateMainMenuSaveUI();alert('Save importado com sucesso.');playSfx('save',.7);}catch(e){alert('Não foi possível importar este save: '+e.message);}};r.readAsText(file);}
 
 loadSettings();applySettings();syncSettingsUI();
 enterMainMenuState();
