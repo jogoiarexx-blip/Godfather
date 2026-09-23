@@ -2115,6 +2115,7 @@ function drawInteriorScene(){
   ctx.restore();
   // Interior frame vignette
   ctx.save();ctx.strokeStyle='rgba(212,175,55,.18)';ctx.lineWidth=2;ctx.strokeRect(off.x,off.y,INT_W,INT_H);ctx.restore();
+  if(b.maxHp&&b.hp<b.maxHp){const w=50;ctx.fillStyle='rgba(0,0,0,.58)';ctx.fillRect(b.x-w/2,b.y-24,w,3);ctx.fillStyle='#78a2ff';ctx.fillRect(b.x-w/2,b.y-24,w*Math.max(0,b.hp/b.maxHp),3);}
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2186,7 +2187,7 @@ function spawnRoadblock(){
     if(d>380&&d<850){best={x:p.x,y:p.y,angle:p.angle,width:r[4],life:24000,hitCd:0};break;}
   }
   if(!best)return;
-  PURSUIT.roadblocks.push(best);showMsg('🚧 BLOQUEIO POLICIAL montado à frente!','d');
+  best.hp=70+GS.stars*10;best.maxHp=best.hp;PURSUIT.roadblocks.push(best);showMsg('🚧 BLOQUEIO POLICIAL montado à frente!','d');
 }
 function pursuitVehicleDamage(v,dmg){
   v.hp-=dmg;if(v.hp>0)return false;
@@ -2196,6 +2197,7 @@ function pursuitVehicleDamage(v,dmg){
 }
 function updatePursuitVehicles(dt){
   if(INTERIOR.active||BOSS_STATE.active){resetPursuitSystem();return;}
+  if(GS.inSafe){PURSUIT.vehicles.length=0;PURSUIT.roadblocks.length=0;PURSUIT.policeTimer=2400;return;}
   PURSUIT.policeTimer-=dt;PURSUIT.rivalTimer-=dt;PURSUIT.roadblockTimer-=dt;
   if(GS.inCar&&GS.stars>=3&&PURSUIT.policeTimer<=0){
     const cap=GS.stars>=5?3:GS.stars>=4?2:1;
@@ -2228,7 +2230,9 @@ function updatePursuitVehicles(dt){
     const b=PURSUIT.roadblocks[i];b.life-=dt;b.hitCd=Math.max(0,b.hitCd-dt);
     if(b.life<=0||GS.stars<3){PURSUIT.roadblocks.splice(i,1);continue;}
     if(GS.inCar&&b.hitCd<=0&&Math.hypot(CAR.x-b.x,CAR.y-b.y)<Math.max(48,b.width*.36)){
-      CAR.takeDmg(14+GS.stars*2);CAR.speed*=-.34;b.hitCd=1200;addScreenShake(7);spawnSpark(CAR.x,CAR.y);showMsg('💥 Você bateu no bloqueio!','d');
+      const impact=Math.max(10,Math.abs(CAR.speed)*3.2);CAR.takeDmg(12+GS.stars*1.5);b.hp-=impact;CAR.speed*=-.30;b.hitCd=1100;addScreenShake(7);spawnSpark(CAR.x,CAR.y);
+      if(b.hp<=0){spawnExplosion(b.x,b.y,.65);showMsg('🚧 Bloqueio rompido!','s');PURSUIT.roadblocks.splice(i,1);continue;}
+      showMsg('💥 Você bateu no bloqueio!','d');
     }
   }
 }
@@ -2766,6 +2770,18 @@ function updateBullets(dt) {
     // ── Player bullets hit enemies / rivals / police ──────────────────
     if (b.owner === 'player') {
       let hit = false;
+
+      // vs pursuit vehicles
+      for(let j=PURSUIT.vehicles.length-1;j>=0;j--){
+        const v=PURSUIT.vehicles[j];
+        if(segCircle(b.px,b.py,b.x,b.y,v.x,v.y,27)){
+          const dmg=Math.round((b.dmg||CFG.BDMG)*.72);spawnImpactFx(b.x,b.y,'metal');showCombatText(v.x,v.y-30,'-'+dmg,'#ffd18a');
+          if(pursuitVehicleDamage(v,dmg))PURSUIT.vehicles.splice(j,1);
+          if(v.kind==='police')GS.addHeat(CFG.HEAT_SHOT*.35);
+          hit=true;break;
+        }
+      }
+      if(hit){BULLETS.splice(i,1);continue;}
 
       // vs enemies — smaller forward head hitbox enables deliberate headshots.
       for (let j=ENEMIES.length-1; j>=0; j--) {
