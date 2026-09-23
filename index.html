@@ -2115,7 +2115,6 @@ function drawInteriorScene(){
   ctx.restore();
   // Interior frame vignette
   ctx.save();ctx.strokeStyle='rgba(212,175,55,.18)';ctx.lineWidth=2;ctx.strokeRect(off.x,off.y,INT_W,INT_H);ctx.restore();
-  if(b.maxHp&&b.hp<b.maxHp){const w=50;ctx.fillStyle='rgba(0,0,0,.58)';ctx.fillRect(b.x-w/2,b.y-24,w,3);ctx.fillStyle='#78a2ff';ctx.fillRect(b.x-w/2,b.y-24,w*Math.max(0,b.hp/b.maxHp),3);}
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2255,6 +2254,7 @@ function drawRoadblock(b){
   ctx.fillStyle='#e2d7b4';for(let x=-b.width*.32;x<b.width*.32;x+=20){ctx.fillRect(x,-5,12,10);ctx.fillStyle='#d34232';ctx.fillRect(x+12,-5,8,10);ctx.fillStyle='#e2d7b4';}
   const flash=Math.floor(Date.now()/170)%2;ctx.fillStyle=flash?'#ff4545':'#3e63ff';ctx.fillRect(-b.width*.28,-15,9,5);ctx.fillStyle=flash?'#3e63ff':'#ff4545';ctx.fillRect(b.width*.22,-15,9,5);
   ctx.restore();
+  if(b.maxHp&&b.hp<b.maxHp){const w=50;ctx.fillStyle='rgba(0,0,0,.58)';ctx.fillRect(b.x-w/2,b.y-24,w,3);ctx.fillStyle='#78a2ff';ctx.fillRect(b.x-w/2,b.y-24,w*Math.max(0,b.hp/b.maxHp),3);}
 }
 function drawPursuitSystem(){for(const b of PURSUIT.roadblocks)drawRoadblock(b);for(const v of PURSUIT.vehicles)drawPursuitCar(v);}
 
