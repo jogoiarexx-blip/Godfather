@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.7</title>
+<title>Godfather Web Edition v8.7.1</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -443,7 +443,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.7 · INTERIORES & NPCS EXCLUSIVOS</div>
+      <div class="ssub">WEB EDITION — v8.7.1 · INTERIORES TESTADOS & CORRIGIDOS</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -502,7 +502,7 @@ body.menu-active #fps-counter{display:none!important}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.7</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.7.1</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
@@ -987,8 +987,9 @@ function endIntimidation(success, msg) {
     } else {
       const t = intimTarget;
       if(INTERIOR.active&&INTERIOR.prop===t){
-        const add=2+currentMapId;const spots=[[520,110],[540,490],[760,320],[250,300]];
-        for(let i=0;i<add;i++){const s=spots[i%spots.length],type=i===add-1?'heavy':'grunt',st=ENEMY_TYPES[type],hp=Math.round(CFG.EHP*st.hp*1.1);INTERIOR.enemies.push({x:s[0],y:s[1],hp,maxHp:hp,type,angle:0,sTimer:400+Math.random()*700,wf:0,wt:0,navSeed:i&1});}
+        const add=2+currentMapId;const spots=[[520,110],[540,490],[760,320],[250,300]],cat=INTERIOR.npcCategory||interiorNpcCategoryForProp(t),occupied=INTERIOR.enemies.map(e=>({x:e.x,y:e.y,r:15}));
+        occupied.push({x:P.x,y:P.y,r:18},{x:INTERIOR.owner.x,y:INTERIOR.owner.y,r:18});
+        for(let i=0;i<add;i++){const s=spots[i%spots.length],type=i===add-1?'heavy':'grunt',st=ENEMY_TYPES[type],hp=Math.round(CFG.EHP*st.hp*1.1),fp=findFreeInteriorPoint(s[0],s[1],15,occupied);const e={x:fp.x,y:fp.y,hp,maxHp:hp,type,angle:0,sTimer:400+Math.random()*700,wf:0,wt:0,navSeed:i&1,npcCategory:cat,variant:(i%3)+1,fireFx:0,moving:false};INTERIOR.enemies.push(e);occupied.push({x:e.x,y:e.y,r:15});}
         INTERIOR.missionTotal=Math.max(INTERIOR.missionTotal,INTERIOR.enemies.length);updateInteriorHUD();showMsg('⚔️ O dono chamou reforços dentro do prédio!','d');
       }else{
         spawnEnemy(t.x, t.y, 3+Math.floor(GS.respect/800));
@@ -1976,15 +1977,15 @@ INTERIOR_NPC_SVG.img.src=INTERIOR_NPC_SVG.src;
 
 function interiorNpcCategoryForProp(prop){
   const n=((prop&&prop.name)||'').toLowerCase();
-  if(/restaurante|pizzaria|pizza|padaria/.test(n))return'restaurant';
-  if(/bar|cantina|bazar|oliveira/.test(n))return'bar';
+  if(/restaurante|pizzaria|pizzeria|pizza|padaria|oliveira/.test(n))return'restaurant';
+  if(/bar|cantina/.test(n))return'bar';
   if(/armaz|doca|porto|destilar/.test(n))return'warehouse';
-  if(/garagem|oficina/.test(n))return'garage';
+  if(/garagem|oficina|ferreiro/.test(n))return'garage';
   if(/hotel/.test(n))return'hotel';
   if(/banco/.test(n))return'bank';
-  if(/joalher|antiqu/.test(n))return'jewelry';
+  if(/joalher|antiqu|bazar/.test(n))return'jewelry';
   if(/cassino|clube|jazz/.test(n))return'casino';
-  if(/teatro|ópera|opera|ringue|estádio|estadio|bowling/.test(n))return'theater';
+  if(/teatro|ópera|opera|ringue|estádio|estadio|bowling|praça|praca/.test(n))return'theater';
   if(/jornal|rádio|radio/.test(n))return'media';
   if(/igreja/.test(n))return'church';
   return'family';
@@ -2001,7 +2002,7 @@ function drawInteriorNpcSprite(cat,role,frame,x,y,w=40,h=80,flip=false,alpha=1){
 function drawInteriorOwnerExclusive(){
   const x=INTERIOR.owner.x,y=INTERIOR.owner.y,cat=INTERIOR.npcCategory||'family';
   const ready=INTERIOR.enemies.length===0&&!INTERIOR.prop.owned&&!INTERIOR.missionComplete;
-  const frame=ready?2:(Math.floor(Date.now()/430)%2);
+  const frame=Math.floor(Date.now()/430)%2;
   ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(x,y+14,12,4,0,0,Math.PI*2);ctx.fill();
   if(!drawInteriorNpcSprite(cat,'owner',frame,x,y,42,84,P.x<x)){
     ctx.fillStyle='#21151c';ctx.beginPath();ctx.arc(x,y,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d4af37';ctx.font='18px serif';ctx.textAlign='center';ctx.fillText('👔',x,y+6);
@@ -2019,6 +2020,14 @@ function drawInteriorEnemyExclusive(e){
   if(e.hp<e.maxHp){const bw=34,bh=4,bx=e.x-bw/2,by=e.y-62;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#ff4b42';ctx.fillRect(bx,by,bw*(e.hp/e.maxHp),bh);}
 }
 
+const INTERIOR_NPC_DEATHS=[];
+function spawnInteriorNpcDeath(a){
+  INTERIOR_NPC_DEATHS.push({x:a.x,y:a.y,angle:a.angle||0,npcCategory:a.npcCategory||INTERIOR.npcCategory||'family',variant:a.variant||1,life:820,maxLife:820});
+}
+function updateInteriorNpcDeaths(dt){for(let i=INTERIOR_NPC_DEATHS.length-1;i>=0;i--){INTERIOR_NPC_DEATHS[i].life-=dt;if(INTERIOR_NPC_DEATHS[i].life<=0)INTERIOR_NPC_DEATHS.splice(i,1);}}
+function drawInteriorNpcDeaths(){
+  for(const d of INTERIOR_NPC_DEATHS){const alpha=Math.min(1,d.life>140?1:d.life/140);drawInteriorNpcSprite(d.npcCategory,'thug'+d.variant,3,d.x,d.y,48,84,Math.cos(d.angle)<0,alpha);}
+}
 function interiorOffsets(){return{x:Math.max(8,(canvas.width-INT_W)/2),y:HUD_H+Math.max(8,(canvas.height-HUD_H-INT_H)/2)};}
 function finishInteriorTemplate(t,prop,variant){
   const dir=variant-1;
@@ -2073,6 +2082,16 @@ function interiorTemplateFor(prop){
 }
 function interiorSolids(){return INTERIOR.solidsCache&&INTERIOR.solidsCache.length?INTERIOR.solidsCache:(INTERIOR.template?INTERIOR.template.walls.concat(INTERIOR.template.furniture.map(f=>({x:f.x,y:f.y,w:f.w,h:f.h}))):[]);}
 function collidesInterior(x,y,r=13){if(x-r<18||y-r<18||x+r>INT_W-18||y+r>INT_H-18)return true;for(const o of interiorSolids())if(circleRectHit(x,y,r,o))return true;return false;}
+function findFreeInteriorPoint(x,y,r=15,occupied=[]){
+  const free=(px,py)=>!collidesInterior(px,py,r)&&!occupied.some(o=>Math.hypot(px-o.x,py-o.y)<r+(o.r||16)+12);
+  if(free(x,y))return{x,y};
+  for(let radius=26;radius<=234;radius+=26){
+    const steps=Math.max(12,Math.ceil(radius/10));
+    for(let i=0;i<steps;i++){const a=(i/steps)*Math.PI*2,px=x+Math.cos(a)*radius,py=y+Math.sin(a)*radius;if(free(px,py))return{x:px,y:py};}
+  }
+  for(let py=54;py<INT_H-54;py+=38)for(let px=54;px<INT_W-54;px+=38)if(free(px,py))return{x:px,y:py};
+  return{x:Math.max(32,Math.min(INT_W-32,x)),y:Math.max(32,Math.min(INT_H-32,y))};
+}
 function moveInteriorEntity(ent,dx,dy,r=13){
   const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/4)),sx=dx/steps,sy=dy/steps,ox=ent.x,oy=ent.y;
   for(let i=0;i<steps;i++){
@@ -2089,11 +2108,12 @@ function spawnInteriorEnemies(prop){
   if(prop.owned)return;
   const spots=(INTERIOR.template&&INTERIOR.template.spawnPoints&&INTERIOR.template.spawnPoints.length)?INTERIOR.template.spawnPoints:[[245,110],[260,500],[525,110],[540,490],[755,300],[860,460],[520,290]];
   const n=Math.min(7,3+currentMapId+Math.floor(GS.respect/1800)),cat=interiorNpcCategoryForProp(prop);
+  const occupied=[{x:INTERIOR.template.spawn.x,y:INTERIOR.template.spawn.y,r:18},{x:INTERIOR.owner.x,y:INTERIOR.owner.y,r:18},{x:INTERIOR.exit.x,y:INTERIOR.exit.y,r:20}];
   for(let i=0;i<n;i++){
     const s=spots[i%spots.length],type=chooseEnemyType(i,n),st=ENEMY_TYPES[type]||ENEMY_TYPES.grunt,hp=Math.round(CFG.EHP*st.hp*1.05);
-    const e={x:s[0],y:s[1],hp,maxHp:hp,type,angle:0,sTimer:500+Math.random()*900,wf:0,wt:0,navSeed:i&1,npcCategory:cat,variant:(i%3)+1,fireFx:0,moving:false};
-    if(collidesInterior(e.x,e.y,15)){e.x=180+i*95;e.y=180+(i%2)*230;}
-    INTERIOR.enemies.push(e);
+    const fp=findFreeInteriorPoint(s[0],s[1],15,occupied);
+    const e={x:fp.x,y:fp.y,hp,maxHp:hp,type,angle:0,sTimer:500+Math.random()*900,wf:0,wt:0,navSeed:i&1,npcCategory:cat,variant:(i%3)+1,fireFx:0,moving:false};
+    INTERIOR.enemies.push(e);occupied.push({x:e.x,y:e.y,r:15});
   }
   INTERIOR.missionTotal=INTERIOR.enemies.length;
 }
@@ -2105,7 +2125,7 @@ async function enterPropertyInterior(prop){
   await buildingLoadStep(18,'PLANTA','Montando salas, corredores e entradas...',()=>{INTERIOR.template=interiorTemplateFor(prop);INTERIOR.owner={...INTERIOR.template.owner};INTERIOR.exit={...INTERIOR.template.exit};INTERIOR.npcCategory=INTERIOR.template.npcCategory||interiorNpcCategoryForProp(prop);});
   await buildingLoadStep(38,'COLISÕES','Compilando paredes, móveis e cobertura...',()=>{const rt=compileInteriorRuntime(INTERIOR.template);INTERIOR.solidsCache=rt.solids;INTERIOR.lightPoints=rt.lights;});
   await buildingLoadStep(60,'SEGURANÇA','Posicionando a segurança do prédio...',()=>{spawnInteriorEnemies(prop);});
-  await buildingLoadStep(78,'ILUMINAÇÃO','Preparando luzes, sombras e ambiente...',()=>{INTERIOR.bullets.length=0;PARTS.length=0;FX.length=0;COMBAT_TEXT.length=0;});
+  await buildingLoadStep(78,'ILUMINAÇÃO','Preparando luzes, sombras e ambiente...',()=>{INTERIOR.bullets.length=0;INTERIOR_NPC_DEATHS.length=0;PARTS.length=0;FX.length=0;COMBAT_TEXT.length=0;});
   await buildingLoadStep(92,'COMBATE','Preparando armas e pontos de confronto...',()=>{P.x=INTERIOR.template.spawn.x;P.y=INTERIOR.template.spawn.y;P.angle=-Math.PI/2;BULLETS.length=0;});
   await buildingLoadStep(100,'PRONTO',(prop.owned?'Interior liberado.':'Invasão pronta · '+INTERIOR.enemies.length+' defensor(es).'),()=>{INTERIOR.active=true;});
   const mm=document.getElementById('minimap-wrap');if(mm)mm.style.display='none';const mp=document.getElementById('map-progress');if(mp)mp.style.display='none';
@@ -2121,7 +2141,7 @@ async function exitInterior(force=false){
   await buildingLoadStep(62,'CIDADE','Restaurando ruas, tráfego e IA externa...',()=>{PARTS.length=0;FX.length=0;COMBAT_TEXT.length=0;});
   await buildingLoadStep(84,'POSIÇÃO','Reposicionando você na entrada...',()=>{P.x=ret.x;P.y=ret.y;P.angle=ret.angle||0;ensureEntityFree(P,13,180);});
   await buildingLoadStep(100,'PRONTO','Cidade carregada.',()=>{});
-  INTERIOR.active=false;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;INTERIOR.prop=null;INTERIOR.template=null;INTERIOR.npcCategory=null;INTERIOR.solidsCache.length=0;INTERIOR.lightPoints.length=0;
+  INTERIOR.active=false;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;INTERIOR_NPC_DEATHS.length=0;INTERIOR.prop=null;INTERIOR.template=null;INTERIOR.npcCategory=null;INTERIOR.solidsCache.length=0;INTERIOR.lightPoints.length=0;
   const mm=document.getElementById('minimap-wrap');if(mm)mm.style.display='';const mp=document.getElementById('map-progress');if(mp)mp.style.display='';document.getElementById('interior-hud')?.classList.remove('on');
   setBuildingLoading(false);GS.paused=false;showMsg('🚪 Voltou para a rua.','i');
 }
@@ -2175,14 +2195,14 @@ function updateInterior(dt){
   }
   for(let i=INTERIOR.bullets.length-1;i>=0;i--){const b=INTERIOR.bullets[i];b.px=b.x;b.py=b.y;b.x+=b.vx*sc;b.y+=b.vy*sc;b.dist+=Math.hypot(b.vx,b.vy)*sc;
     if(b.dist>(b.range||600)||b.x<0||b.y<0||b.x>INT_W||b.y>INT_H||interiorLineBlocked(b.px,b.py,b.x,b.y,1)){spawnImpactFx(b.x,b.y,b.owner==='player'?'wall':'metal');INTERIOR.bullets.splice(i,1);continue;}
-    if(b.owner==='player'){let hit=false;for(let j=INTERIOR.enemies.length-1;j>=0;j--){const e=INTERIOR.enemies[j],zone=bulletActorHit(b,e);if(zone){const dmg=Math.round((b.dmg||CFG.BDMG)*(zone==='head'?(b.headMult||1.6):1));e.hp-=dmg;spawnBlood(b.x,b.y,zone==='head'?14:8);spawnImpactFx(b.x,b.y,'flesh');if(zone==='head')showCombatText(e.x,e.y-42,'HEADSHOT!','#ffd54a');if(e.hp<=0){const dead=INTERIOR.enemies[j];INTERIOR.enemies.splice(j,1);spawnDeathAnim('enemy',dead);GS.killCount++;GS.addMoney(zone==='head'?110:85);GS.addRespect(25);addKillCombo(dead.x,dead.y,1);misEvent('kill');}hit=true;break;}}if(hit){INTERIOR.bullets.splice(i,1);updateInteriorHUD();continue;}}
+    if(b.owner==='player'){let hit=false;for(let j=INTERIOR.enemies.length-1;j>=0;j--){const e=INTERIOR.enemies[j],zone=bulletActorHit(b,e);if(zone){const dmg=Math.round((b.dmg||CFG.BDMG)*(zone==='head'?(b.headMult||1.6):1));e.hp-=dmg;spawnBlood(b.x,b.y,zone==='head'?14:8);spawnImpactFx(b.x,b.y,'flesh');if(zone==='head')showCombatText(e.x,e.y-42,'HEADSHOT!','#ffd54a');if(e.hp<=0){const dead=INTERIOR.enemies[j];INTERIOR.enemies.splice(j,1);dead.npcCategory?spawnInteriorNpcDeath(dead):spawnDeathAnim('enemy',dead);GS.killCount++;GS.addMoney(zone==='head'?110:85);GS.addRespect(25);addKillCombo(dead.x,dead.y,1);misEvent('kill');}hit=true;break;}}if(hit){INTERIOR.bullets.splice(i,1);updateInteriorHUD();continue;}}
     else if(Math.hypot(b.x-P.x,b.y-P.y)<HITBOX_PL){P.takeDmg(b.dmg||CFG.EDMG);spawnBlood(b.x,b.y,4);INTERIOR.bullets.splice(i,1);continue;}
   }
-  updateParts(dt);updateFX(dt);updateDeathAnims(dt);updateCombatText(dt);updateShake();updateInteriorHUD();
+  updateParts(dt);updateFX(dt);updateDeathAnims(dt);updateInteriorNpcDeaths(dt);updateCombatText(dt);updateShake();updateInteriorHUD();
 }
 function performInteriorMelee(){
   if(meleeCD>0)return;meleeCD=520;meleeSwing=180;let best=-1,bd=68;for(let i=0;i<INTERIOR.enemies.length;i++){const e=INTERIOR.enemies[i],d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd&&!interiorLineBlocked(P.x,P.y,e.x,e.y,2)){bd=d;best=i;}}
-  addScreenShake(best>=0?4:1.5);if(best<0)return;const e=INTERIOR.enemies[best];e.hp-=42;spawnBlood(e.x,e.y,7);showCombatText(e.x,e.y-34,'-42','#ffb0a0');const a=Math.atan2(e.y-P.y,e.x-P.x);moveInteriorEntity(e,Math.cos(a)*18,Math.sin(a)*18,15);if(e.hp<=0){const dead=INTERIOR.enemies[best];INTERIOR.enemies.splice(best,1);spawnDeathAnim('enemy',dead);GS.killCount++;GS.addMoney(85);GS.addRespect(20);misEvent('kill');}updateInteriorHUD();
+  addScreenShake(best>=0?4:1.5);if(best<0)return;const e=INTERIOR.enemies[best];e.hp-=42;spawnBlood(e.x,e.y,7);showCombatText(e.x,e.y-34,'-42','#ffb0a0');const a=Math.atan2(e.y-P.y,e.x-P.x);moveInteriorEntity(e,Math.cos(a)*18,Math.sin(a)*18,15);if(e.hp<=0){const dead=INTERIOR.enemies[best];INTERIOR.enemies.splice(best,1);dead.npcCategory?spawnInteriorNpcDeath(dead):spawnDeathAnim('enemy',dead);GS.killCount++;GS.addMoney(85);GS.addRespect(20);misEvent('kill');}updateInteriorHUD();
 }
 function drawInteriorWorld(){
   const t=INTERIOR.template;if(!t)return;const T=Date.now()*.001;
@@ -2235,7 +2255,7 @@ function drawInteriorScene(){
   const off=interiorOffsets();ctx.save();ctx.translate(off.x+shakeX,off.y+shakeY);drawInteriorWorld();
   if(INTERIOR.prop)drawInteriorOwnerExclusive();
   for(const e of INTERIOR.enemies)drawInteriorEnemyExclusive(e);
-  drawDeathAnims();
+  drawInteriorNpcDeaths();drawDeathAnims();
   drawPlayer(P.x,P.y,P.angle);
   for(const b of INTERIOR.bullets)drawBulletVisual(b);
   drawFX();drawParticlesVisual();drawCombatTextVisual();
