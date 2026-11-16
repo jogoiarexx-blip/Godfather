@@ -29,7 +29,12 @@ function territoryRouteFor(g,prop){
   // and odd slots walk in reverse order to avoid following the same trail.
   for(let i=0;i<TERRITORY_ROUTE_FRACTIONS.length;i++){
     const idx=(slot*3+(slot%2?-i:i)+8)%8,fr=TERRITORY_ROUTE_FRACTIONS[idx];
-    const wanted=territoryClamp(d,d.x+fr[0]*d.w,d.y+fr[1]*d.h);
+    // Only patrol the entire district after it belongs to the family.
+    // Before full conquest guard the neighborhood immediately around this business.
+    const fullControl=d.owner==='player';
+    const wanted=fullControl?
+      territoryClamp(d,d.x+fr[0]*d.w,d.y+fr[1]*d.h):
+      territoryClamp(d,prop.x+(fr[0]-.5)*240,prop.y+(fr[1]-.5)*225);
     const free=findFreePoint(wanted.x,wanted.y,15,130);
     if(territoryInside(d,free.x,free.y,14)){
       route.push({x:free.x,y:free.y});
@@ -46,6 +51,7 @@ function territoryRouteFor(g,prop){
 function territoryPatrolInit(g,prop){
   if(!g||!prop||g.safeId)return;
   g.patrolRoute=territoryRouteFor(g,prop);
+  g.routeControl=territoryDistrict(prop)?.owner==='player';
   g.patrolIndex=0;
   g.patrolWait=300+(g.slot||0)*250;
   g.patrolStuck=0;
@@ -89,6 +95,10 @@ function territoryGuardMove(g,target,dt,speed,prop){
   // The navigation helper has its own wall avoidance, but the goal itself
   // must always remain inside the district. Guard never gets a chase order
   // outside the owned turf.
+  // Collision steering must not push patrols beyond their protected district.
+  if(district&&!territoryInside(district,g.x,g.y,-8)){
+    g.x=ox;g.y=oy;
+  }
   const distance=Math.hypot(g.x-ox,g.y-oy);
   g.moving=distance>.055;
   if(g.moving)g.angle=wantedAngle;
@@ -96,7 +106,9 @@ function territoryGuardMove(g,target,dt,speed,prop){
 }
 function territoryPatrolTick(g,dt,prop){
   if(!g||g.dead||!prop?.owned)return;
-  if(!Array.isArray(g.patrolRoute)||!g.patrolRoute.length)territoryPatrolInit(g,prop);
+  const controlled=territoryDistrict(prop)?.owner==='player';
+  if(!Array.isArray(g.patrolRoute)||!g.patrolRoute.length||
+      g.routeControl!==controlled)territoryPatrolInit(g,prop);
   const step=Math.max(0,Math.min(34,dt));
   const enemy=territoryGuardThreat(g,prop);
   const speed=PG_SPEED*TERRITORY_PATROL.guardSpeed*(1+(g.slot||0)*.06);
