@@ -4606,8 +4606,10 @@ function loadGame() {
     else curWeapon=0;
     (data.weapons||[]).forEach((sv,i)=>{
       const w=WEAPONS[i];if(!w)return;
-      if(Number.isFinite(sv.ammo)||sv.ammo===-1)w.ammo=sv.ammo;
-      w.clip=Number.isFinite(sv.clip)?Math.max(0,Math.min(w.magSize,sv.clip)):w.magSize;
+      // Cap restored ammunition to the upgraded capacity; legacy pistol uses -1.
+      if(w.maxAmmo===-1)w.ammo=-1;
+      else w.ammo=Number.isFinite(sv.ammo)?Math.max(0,Math.min(w.maxAmmo,Math.floor(sv.ammo))):w.maxAmmo;
+      w.clip=Number.isFinite(sv.clip)?Math.max(0,Math.min(w.magSize,Math.floor(sv.clip))):w.magSize;
     });
     reloadTimer=0;reloadWeapon=-1;recoilKick=0;meleeCD=0;meleeSwing=0;
 
