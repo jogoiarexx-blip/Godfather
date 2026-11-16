@@ -1,4 +1,49 @@
-# CHECKPOINT — GODFATHER WEB EDITION
+# CHECKPOINT ATUAL — GODFATHER v8.9.0
+
+**Atualizado em:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.2  
+**Fase:** 2 — Arsenal e munição; base funcional publicada, testes visuais e balanceamento pendentes.
+
+## Diagnóstico
+O negociante anterior comprava automaticamente a próxima arma com a tecla E. O HUD permitia comprar armas diretamente clicando em slots, fora do negociante. Não havia melhorias de dano/pente/recarga/precisão, pacotes de munição nem persistência dessas evoluções.
+
+## Alterações implementadas
+- Oficina modal com abas **Armas**, **Munição** e **Melhorias**, aberta com **E** quando próximo do negociante e a pé.
+- Prioridade da interação com negociante quando uma propriedade fica perto dele.
+- Compra de shotgun $2.500 e metralhadora $6.000 somente na oficina; clicar em arma bloqueada no HUD agora informa onde comprar.
+- Pacotes pequenos e médios de munição: shotgun +8/$200, +20/$450; metralhadora +30/$280, +60/$520; reabastecimento completo $500/$800.
+- Pacotes pequenos/médios exigem espaço para **todo o pacote**; nada é cobrado se houver overflow. Recarga completa repõe reserva e carregador.
+- Quatro upgrades de arma em 3 níveis: dano, capacidade do pente, velocidade de recarga e precisão (incluindo recuo e penalidade de movimento).
+- Bolsa de munição em 3 níveis para shotgun e metralhadora, sem conceder balas gratuitamente no upgrade.
+- UI mostra arma, custo, nível, atributos, reserva, carregador e saldo. **ESC** fecha, compras sincronizam HUD e acionam save.
+- **Save versão 19** registra `weaponProgress` com os cinco níveis por arma. Saves v7–v18 continuam aceitos com armas base.
+- Dados de munição restaurados são limitados às capacidades atuais para evitar estouro de reserva/carregador.
+- Reset de novo jogo limpa também os upgrades de armas e encerra a oficina.
+
+## Arquivos e commits
+- `js/weapon-progression.js`: lógica e renderização da oficina — `b0bd682d76fb343cdb27575a545da5a6cc45d897`
+- `css/weapon-shop.css`: modal responsivo — `e6ec55d011af14b5008281de49d4b16509036dc1`
+- `index.html`: integração no jogo, preço/compra restritos, save v19 — `2d783ff62d8be22b19d6d69bef61532d53295c50`
+- `index.html`: ajuste de limites de munição restaurada — `1c5a79af25eef9a009ab5ce0f16fde4da23a9c6a`
+- `GDD_GODFATHER_COMPLETO.md`: estado v8.9 documentado — `1506b05c9588e75e10c98967be8a7d45738b46b7`
+
+## Testes realizados
+- Compilação sintática: módulo e script principal combinados — **passou**.
+- Integrações estáticas: CSS/JS linkados, E próximo ao negociante, ausência de compra automática, tecla ESC, save v19, reset e migration — **passou**.
+- **31 verificações de lógica** com ambiente JavaScript simulado: preço, compras, recusa por saldo, níveis, atributos derivados, reload, pack de munição, limites de capacidade, painel, snapshot/restauração, restart, alcance e bloqueio fora da loja — **passaram**.
+- **6 verificações de save**: v17, v18, v19, dados v19 ausentes, nível inválido e dinheiro inválido — **passaram**.
+- Teste visual e sessão completa no navegador: **não executado**. A ferramenta de navegação não conseguiu acessar o GitHub Pages durante esta etapa; publicação de commits foi confirmada diretamente no repositório.
+
+## Riscos e próximo ciclo
+1. Testar em navegador real a abertura/fechamento do modal, scroll em resoluções baixas e foco do teclado.
+2. Verificar compra durante o combate e mudança de propriedade/território, incluindo proximidade entre vendedor e propriedade.
+3. Testar save v18 importado e jogo iniciado com nova versão, inclusive em Palermo e Chicago.
+4. Balancear dano máximo da shotgun e os valores das armas na campanha e chefes com HP evoluído.
+5. Avançar para Fase 3: IA, animações, combate e padrões exclusivos dos chefes.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.8.0
 
 **Data:** 16/11/2026  
 **Versão de código:** v8.8.0  
