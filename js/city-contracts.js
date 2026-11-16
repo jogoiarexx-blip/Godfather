@@ -65,8 +65,8 @@ function cityContractsValid(data){
   if(!d||data.completed[a.city].includes(a.id)||!Number.isInteger(a.stage)||a.stage<0||a.stage>1)return false;
   if(!Number.isInteger(a.kills)||a.kills<0||a.kills>(d.total||0))return false;
   if(typeof a.wantedStarted!=='boolean')return false;
-  if(d.kind==='hunt'&&a.stage!==0)return false;
-  if(d.kind==='escape'&&a.kills!==0)return false;
+  if(d.kind==='hunt'&&(a.stage!==0||a.wantedStarted))return false;
+  if(d.kind==='escape'&&(a.kills!==0||((a.stage===1)!==a.wantedStarted)))return false;
   if(d.kind==='courier'&&(a.kills!==0||a.wantedStarted))return false;
   return true;
 }
@@ -84,7 +84,7 @@ function cityContractsMapChange(){
   CITY_CONTRACT_PROGRESS.active=null;
 }
 function cityContractsRestore(saved){
-  if(!cityContractsValid(saved)){cityContractsReset();return false;}
+  if(!cityContractsValid(saved)||(saved.active&&saved.active.city!==currentMapId)){cityContractsReset();return false;}
   CITY_CONTRACT_PROGRESS.completed=saved.completed.map(a=>[...a]);
   CITY_CONTRACT_PROGRESS.active=saved.active?{...saved.active}:null;
   const a=cityContractsCurrent();
