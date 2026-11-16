@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.4 • **Data:** 16/11/2026  
+**Versão do documento:** 1.5 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -373,6 +373,33 @@ Existem imóveis seguros com regeneração e guardas. Locais por cidade:
 
 ---
 
+## 11. Contratos secundários específicos das cidades [ATUAL — v8.12]
+
+Além das 24 etapas da campanha, existem **9 contratos extras (3 por cidade)**, com três mecânicas separadas e progressos independentes da missão principal. Cada contrato só pode ser concluído uma vez por campanha. O painel Missões informa nível mínimo de respeito, breve narrativa, recompensa e estado. A recompensa é aplicada exclusivamente após validar o objetivo.
+
+| Cidade | Contrato | Mecânica jogável | Recompensa | Desbloqueio |
+|---|---|---|---|---|
+| Nova Corleone | Documentos do Porto | Coletar no negócio 0 e entregar no 5 (E em ambos) | $1.800 / 170 respeito | 0 |
+| Nova Corleone | O Cobrador da Doca | Derrotar 3 inimigos **específicos** convocados próximo ao negócio 3 | $3.800 / 320 respeito | 300 |
+| Nova Corleone | Assalto ao Cassino | Executar golpe junto ao negócio 8 e zerar perseguição | $5.200 / 450 respeito | 900 |
+| Palermo Oscura | O Código da Omertà | Coletar no negócio 1 e entregar no 7 | $3.600 / 290 respeito | 0 |
+| Palermo Oscura | Silêncio em Palermo | Derrotar 4 inimigos específicos próximo ao negócio 4 | $6.900 / 550 respeito | 600 |
+| Palermo Oscura | As Joias do Palazzo | Executar golpe no negócio 9 e zerar perseguição | $11.000 / 850 respeito | 1.600 |
+| Chicago Noir | O Livro de Chicago | Coletar no negócio 2 e entregar no 9 | $6.500 / 520 respeito | 0 |
+| Chicago Noir | A Última Vigília | Derrotar 5 inimigos específicos próximo ao negócio 10 | $13.000 / 950 respeito | 1.200 |
+| Chicago Noir | O Cofre de Chicago | Executar golpe no negócio 6 e zerar perseguição | $19.000 / 1.250 respeito | 3.000 |
+
+**Regras reais:**
+- Contratos são opcionais; é possível manter a missão principal ativa. Ao aceitar o contrato, o GPS e a faixa de objetivo priorizam o trabalho secundário; o objetivo principal não é apagado.
+- Entregas exigem presença física em dois pontos diferentes, interação **E** e personagem a pé.
+- Caçadas criam alvos identificados por `cityContractId`; matar qualquer inimigo da rua não dá progresso falso. Morte por bala ou golpe corpo a corpo conta; o sistema recompõe alvos ausentes após restauração de save durante uma caçada.
+- Golpes provocam pelo menos duas estrelas de perseguição e só são concluídos depois da procurada terminar. A interação não funciona dentro de zona segura.
+- Contratos podem ser abandonados; alvos remanescentes do contrato são removidos. O progresso parcial é perdido, mas o contrato pode ser reiniciado; contratos concluídos não podem repetir recompensa.
+- O encontro com o chefe rival interrompe contrato ativo antes de limpar a arena; o boss tem prioridade.
+- Os contratos têm progressos exclusivos por cidade e continuam desbloqueados nos saves; a transição entre cidades mantém os contratos anteriormente concluídos.
+
+**Pendências e limites:** ainda é necessário testar a experiência completa em navegador, qualidade da navegação dos inimigos de contratos e equilíbrio dos prêmios nas três economias. A missão de fuga usa o mesmo motor de perseguição da campanha; não há nova mecânica de arrombamento/assalto cinematográfico.
+
 ## 12. Respeito, patentes e guardas
 
 | Patente | Respeito mínimo | Guarda-costas base |
@@ -500,7 +527,7 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 21**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 22**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
 ### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
@@ -534,6 +561,19 @@ O formato v21 mantém a leitura de saves v7–v20 e adiciona `bodyguardStates` c
 **Combate da v8.11:** guarda-costas não atiram através de paredes e priorizam inimigos próximos ao jogador. Quando procurado com estrelas ativas, combatem policiais visíveis; com zero estrelas ou em zona segura, não iniciam fogo contra agentes que ainda estiverem patrulhando. A detecção policial de curta distância também exige linha de visão real. A busca policial é dirigida por `dt`, não pelo relógio do sistema.
 
 **Chefes:** quantidade de disparos das rajadas normais progride 1 / 3 / 5 por fase, mas o dano **total teórico da rajada** é limitado a 1,00× / 1,65× / 2,10× do ataque base do chefe. O limite de capangas é 3 / 4 / 5 conforme a fase, com no máximo +1 em cidades posteriores. Reforços ganham composição por cidade sem atravessar o limite. Após especial avisado, o chefe respeita janela de recuperação de pelo menos 620 ms antes de voltar a disparar normalmente. Esses números são configuração de balanceamento, não evidência de dificuldade ideal; exigem teste presencial no jogo.
+
+### 19.5 Extensão v22 — progresso de contratos por cidade [ATUAL]
+
+O save v22 mantém a chave `gf_save_v7` e suporte a versões v7–v21. Adiciona:
+
+```json
+"cityContracts": {
+  "completed": [[], [], []],
+  "active": null
+}
+```
+
+Cada cidade mantém IDs próprios de contratos concluídos. Quando ativo, o objeto contém `id`, `city`, `stage`, `kills` e `wantedStarted`. Inimigos específicos de caçada preservam `cityContractId` no array de NPCs do save, para impedir perda de progresso após continuar a partida. Versões antigas restauram zero contratos. A validação impede IDs inexistentes, estados incompatíveis, contagem acima do alvo, conclusão duplicada e contratos ativos em mapa diferente do save.
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
@@ -622,13 +662,13 @@ O formato v21 mantém a leitura de saves v7–v20 e adiciona `bodyguardStates` c
 4. [PARCIAL] Chefes usam orçamento limitado de dano total por rajada e limites para reforços nas três fases; há intervalo de recuperação após especiais. Balanceamento definitivo para HP 100–250 e armas aprimoradas depende de playtests.
 5. [ATUAL] Padrões especiais exclusivos e telegráficos: Barzini — anel radial; Tattaglia — rajada frontal em leque; Stracci — fogo cruzado. Novos sinais com 850/1020/1180 ms de antecipação por chefe.
 
-### Fase 4 — MUNDO E MISSÕES
+### Fase 4 — MUNDO E MISSÕES [EM ANDAMENTO v8.12]
 
-1. Variar interiores sem destruir rotas já funcionais.
-2. Acrescentar conteúdo narrativo e missões exclusivas.
-3. Melhorar tráfego, eventos, vida urbana e diferenciação de mapas.
-4. Atualizar menus e mapas sem excesso de informação.
-5. Incorporar árvore de habilidades complementar e testes.
+1. [PENDENTE] Variar interiores sem destruir rotas já funcionais.
+2. [ATUAL — v8.12] Acrescentados nove contratos secundários com objetivos funcionais e escrita/localizações/recompensas específicas de cada cidade; as 24 etapas principais continuam intactas.
+3. [PENDENTE] Melhorar tráfego, eventos, vida urbana e diferenciação de mapas.
+4. [PARCIAL] Contratos novos aparecem agrupados na aba Missões, sem criar outra aba no menu; HUD/GPS existentes mostram o contrato ativo.
+5. [PENDENTE] Incorporar árvore de habilidades complementar e playtests visuais.
 
 ### Fase 5 — POLIMENTO E LANÇAMENTO
 
@@ -682,4 +722,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** executar playtest v8.11 em navegador real — perseguições e visão policial, proteção por guarda-costas, morte/restauração de guardas, 3 batalhas de chefe em diferentes níveis de equipamento e saves v20. Depois iniciar ajustes de ambiente, veículos e conteúdo conforme Fase 4. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
+**Próxima implementação recomendada:** concluir playtests v8.12 no navegador (interações E, marcadores de GPS, avanço e restauração de contratos, chefe rival), executar os testes automatizados do repositório e continuar Fase 4 com melhorias concretas de veículos, tráfego e interiores. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md)..
