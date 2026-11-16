@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.10.0</title>
+<title>Godfather Web Edition v8.11.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/player-progression.css">
@@ -411,7 +411,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.10</h2>
+      <h2>🗺 ROADMAP v8.11</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -441,6 +441,7 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.8 — Evolução do personagem</b> — vida, colete, estamina, resistência, kits</div>
         <div class="rmap-item done">✅ <b>v8.9 — Oficina</b> — armas, pacotes de munição e cinco melhorias permanentes</div>
         <div class="rmap-item done">✅ <b>v8.10 — IA tática</b> — memória de visão, flanco, atirador com mira e padrões de chefes</div>
+        <div class="rmap-item done">✅ <b>v8.11 — Guarda-costas e polícia</b> — proteção, patrulhas e chefes equilibrados</div>
         <div class="rmap-item pend">🔜 Próximas etapas — Balanceamento, guardas, veículos adicionais e garagem</div>
       </div>
     </div>
@@ -452,7 +453,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.10.0 · COMBATE TÁTICO E CHEFES</div>
+      <div class="ssub">WEB EDITION — v8.11.0 · GUARDA-COSTAS, POLÍCIA E CHEFES</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -579,6 +580,7 @@ body.menu-active #fps-counter{display:none!important}
 <script src="js/player-progression.js"></script>
 <script src="js/weapon-progression.js"></script>
 <script src="js/combat-tactics.js"></script>
+<script src="js/security-tactics.js"></script>
 <script>
 'use strict';
 
@@ -1494,8 +1496,10 @@ function drawSafehouses() {
 // WANTED TIMER — seconds until stars disappear after getting out of sight
 const WANTED_CLEAR_TIME = 8000; // 8 seconds out of police sight to clear
 function policeCanSeePlayer(p){
+  if(GS.inSafe)return false;
   const d=Math.hypot(p.x-P.x,p.y-P.y);
-  if(d<130) return true;
+  // Close range must still respect buildings: no sight through a wall.
+  if(d<130)return !worldLineBlocked(p.x,p.y,P.x,P.y,7);
   const night=daylightState().night;
   // Darkness makes hiding between blocks useful. Driving and maximum wanted
   // levels partially cancel this advantage because the player is easier to spot.
@@ -1650,16 +1654,16 @@ function updateFamilyBoss(b,dt){
   b.wt+=dt;if(b.wt>105){b.wf=(b.wf+1)%6;b.wt=0;}
   b.sTimer-=dt;
   if(b.sTimer<=0&&!b.bossWarning&&dist<520&&!worldLineBlocked(b.x,b.y,P.x,P.y,5)){
-    const shots=[1,3,5][BOSS_STATE.phase],spread=[.05,.18,.27][BOSS_STATE.phase];
-    for(let i=0;i<shots;i++)fireAt(b.x,b.y,'enemy',P.x,P.y,{spread,dmg:def.dmg*(1+BOSS_STATE.phase*.12),range:620});
-    b.sprShoot=220;b.sTimer=[760,620,490][BOSS_STATE.phase];
+    // Cap the combined damage of a boss volley as shots multiply across phases.
+    securityBossVolley(b,BOSS_STATE.phase,def);
+    b.sTimer=[760,620,490][BOSS_STATE.phase];
   }
   // Distinct, telegraphed signatures: Barzini ring, Tattaglia fan, Stracci crossfire.
   combatBossSpecialTick(b,dt,def,dist);
   b.summonTimer-=dt;
   if(b.summonTimer<=0){
-    const minions=ENEMIES.filter(e=>!e.isBoss).length;
-    if(minions<5+BOSS_STATE.phase){const add=1+BOSS_STATE.phase+currentMapId;spawnEnemy(b.x+(Math.random()-.5)*140,b.y+(Math.random()-.5)*140,add);showMsg('🔴 Reforços de '+MAP_DEFS[currentMapId].rival+' chegaram!','d');}
+    const spawned=securityBossReinforcements(b,BOSS_STATE.phase,currentMapId);
+    if(spawned>0)showMsg('🔴 '+spawned+' reforço(s) de '+MAP_DEFS[currentMapId].rival+' chegaram!','d');
     b.summonTimer=[10000,8200,6500][BOSS_STATE.phase];
   }
   updateBossHUD();
@@ -2754,7 +2758,7 @@ function spawnPolice() {
   const cx=GS.camX, cy=GS.camY, sw=window.innerWidth, sh=window.innerHeight;
   const e=Math.random(); let sx,sy;
   if(e<.25)sx=cx-80,sy=cy+Math.random()*sh; else if(e<.5)sx=cx+sw+80,sy=cy+Math.random()*sh; else if(e<.75)sx=cx+Math.random()*sw,sy=cy-80; else sx=cx+Math.random()*sw,sy=cy+sh+80;
-  {const fp=findFreePoint(Math.max(16,Math.min(CFG.WW-16,sx)),Math.max(16,Math.min(CFG.WH-16,sy)),16);POLICE.push({x:fp.x, y:fp.y, hp:CFG.COHP, maxHp:CFG.COHP, angle:0, sTimer:1000+Math.random()*500, carHitCd:0, id:POLICE.length, navSeed:Math.random()<.5?0:1,lastSeenX:P.x,lastSeenY:P.y,searchTimer:4500,hasVisual:true,kind:'police'});}
+  {const fp=findFreePoint(Math.max(16,Math.min(CFG.WW-16,sx)),Math.max(16,Math.min(CFG.WH-16,sy)),16);POLICE.push({x:fp.x, y:fp.y, hp:CFG.COHP, maxHp:CFG.COHP, angle:0, sTimer:1000+Math.random()*500, carHitCd:0, id:POLICE.length, navSeed:Math.random()<.5?0:1,lastSeenX:P.x,lastSeenY:P.y,searchTimer:4500,searchPhase:0,hasVisual:true,kind:'police'});}
 }
 function updatePolice(dt) {
   if(GS.stars<policeDispatchLevel)policeDispatchLevel=GS.stars;
@@ -2796,15 +2800,9 @@ function updatePolice(dt) {
     if(visual){p.hasVisual=true;p.lastSeenX=P.x;p.lastSeenY=P.y;p.searchTimer=5000;}
     else{p.hasVisual=false;p.searchTimer=Math.max(0,(p.searchTimer??0)-dt);}
 
-    // Police chase the last confirmed position when line-of-sight is lost instead
-    // of magically knowing the player's exact position through buildings.
-    let targetX=visual?P.x:(Number.isFinite(p.lastSeenX)?p.lastSeenX:P.x);
-    let targetY=visual?P.y:(Number.isFinite(p.lastSeenY)?p.lastSeenY:P.y);
-    if(!visual && p.searchTimer<=0){
-      const phase=(p.id*1.7+Date.now()*.00055);
-      targetX=(p.lastSeenX??P.x)+Math.cos(phase)*110;
-      targetY=(p.lastSeenY??P.y)+Math.sin(phase)*110;
-    }
+    // Deterministic patrol/search based on simulation time, not wall-clock time.
+    const target=securityPoliceSearchTarget(p,visual,dt);
+    let targetX=target.x,targetY=target.y;
     p.angle=Math.atan2(targetY-p.y,targetX-p.x);
 
     // If the player is protected, patrol the border of that exact safe zone.
@@ -2831,7 +2829,7 @@ function updatePolice(dt) {
 
     p.x=Math.max(0,Math.min(CFG.WW,p.x)); p.y=Math.max(0,Math.min(CFG.WH,p.y));
     p.sTimer-=dt;
-    if(p.sTimer<=0 && dist<350 && visual && !GS.inSafe){
+    if(GS.stars>0 && p.sTimer<=0 && dist<350 && visual && !GS.inSafe){
       fireAt(p.x,p.y,'police'); p.sprShoot=180; p.sTimer=(GS.stars>=4?600:900)+Math.random()*400;
     }
     p.carHitCd=Math.max(0,(p.carHitCd||0)-dt);
@@ -2871,31 +2869,8 @@ function syncGuards() {
 }
 function bgShootCd() { return Math.round(400 / (typeof GU!=='undefined' ? guBgDmgMult() : 1)); }
 function bgDmg()     { return Math.round(20  * (typeof GU!=='undefined' ? guBgDmgMult() : 1)); }
-function updateGuards(dt) {
-  const sc=dt/16;
-  const total = GUARDS.length;
-  for (const g of GUARDS) {
-    // Respawn countdown
-    if(g.dead){
-      g.respawnTimer -= dt;
-      if(g.respawnTimer <= 0){
-        g.dead = false;
-        g.hp = g.maxHp;
-        {const fp=findFreePoint(P.x+Math.cos((g.id/Math.max(1,total))*Math.PI*2)*60,P.y+Math.sin((g.id/Math.max(1,total))*Math.PI*2)*60,15,120);g.x=fp.x;g.y=fp.y;}
-        showMsg('👤 Guarda substituído.','i');
-      }
-      continue;
-    }
-    const fa=(g.id/Math.max(1,total))*Math.PI*2+Date.now()*.0002;
-    const tx=P.x+Math.cos(fa)*CFG.BG_DIST, ty=P.y+Math.sin(fa)*CFG.BG_DIST;
-    const dx=tx-g.x, dy=ty-g.y, dist=Math.hypot(dx,dy);
-    g.moving=false; if(dist>10){const ox=g.x,oy=g.y;moveTowardWorld(g,tx,ty,Math.min(dist*.15,6),dt,15,g.id);g.moving=Math.hypot(g.x-ox,g.y-oy)>.05;}
-    let nt=null, nd=CFG.BG_RANGE;
-    for(const e of ENEMIES){const d=Math.hypot(e.x-g.x,e.y-g.y);if(d<nd){nd=d;nt={x:e.x,y:e.y};}}
-    for(const a of RIVALS){const d=Math.hypot(a.x-g.x,a.y-g.y);if(d<nd){nd=d;nt={x:a.x,y:a.y};}}
-    for(const p of POLICE){const d=Math.hypot(p.x-g.x,p.y-g.y);if(d<nd){nd=d;nt={x:p.x,y:p.y};}}
-    if(nt){g.angle=Math.atan2(nt.y-g.y,nt.x-g.x); g.sTimer-=dt; if(g.sTimer<=0&&!worldLineBlocked(g.x,g.y,nt.x,nt.y,4)){BULLETS.push({x:g.x,y:g.y,px:g.x,py:g.y,vx:Math.cos(g.angle)*CFG.BSPEED*.9,vy:Math.sin(g.angle)*CFG.BSPEED*.9,dist:0,owner:'player',dmg:bgDmg()});g.sprShoot=180;g.sTimer=bgShootCd()+Math.random()*200;}}
-  }
+function updateGuards(dt){
+  securityUpdateGuards(dt);
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -4491,7 +4466,7 @@ let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function isValidSaveData(d){
-  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20].includes(d.ver))return false;
+  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].includes(d.ver))return false;
   if(!Number.isInteger(d.mapId)||d.mapId<0||d.mapId>=MAP_DEFS.length)return false;
   if(!Number.isFinite(d.money)||d.money<0||!Number.isFinite(d.respect)||d.respect<0)return false;
   if(!Number.isFinite(d.px)||!Number.isFinite(d.py))return false;
@@ -4508,12 +4483,16 @@ function isValidSaveData(d){
   }
   if(d.ver>=19&&!weaponProgressSchemaValid(d.weaponProgress))return false;
   if(d.ver>=20&&Array.isArray(d.enemies)&&!d.enemies.every(e=>!e?.isBoss||combatBossWarningValid(e.bossWarning)))return false;
+  if(d.ver>=21){
+    if(!securityGuardStatesValid(d.bodyguardStates))return false;
+    if(!Array.isArray(d.police)||!d.police.every(p=>p&&Number.isFinite(p.searchPhase)&&p.searchPhase>=0&&p.searchPhase<=Math.PI*2))return false;
+  }
   return true;
 }
 
 function saveGame() {
   const data = {
-    ver: 20,
+    ver: 21,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4530,7 +4509,7 @@ function saveGame() {
     sprintStamina,
     gameMinutes, minimapVisible,
     rivalPower, rivalThink,
-    police:POLICE.map(p=>({x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,angle:p.angle,sTimer:p.sTimer,carHitCd:p.carHitCd||0,id:p.id,lastSeenX:p.lastSeenX,lastSeenY:p.lastSeenY,searchTimer:p.searchTimer,hasVisual:p.hasVisual})),
+    police:POLICE.map(p=>({x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,angle:p.angle,sTimer:p.sTimer,carHitCd:p.carHitCd||0,id:p.id,lastSeenX:p.lastSeenX,lastSeenY:p.lastSeenY,searchTimer:p.searchTimer,searchPhase:securityPoliceRecord(p),hasVisual:p.hasVisual})),
     enemies:ENEMIES.map(e=>({x:e.x,y:e.y,hp:e.hp,maxHp:e.maxHp,type:e.type,angle:e.angle,sTimer:e.sTimer,alertDist:e.alertDist,state:e.state,wf:e.wf,wt:e.wt,navSeed:e.navSeed,stun:e.stun||0,isBoss:!!e.isBoss,bossId:e.bossId||null,specialTimer:e.specialTimer||0,summonTimer:e.summonTimer||0,bossWarning:e.isBoss?(e.bossWarning||null):null,...combatEnemySerialize(e)})),
     bossState:{active:BOSS_STATE.active,defeated:BOSS_STATE.defeated,acknowledged:BOSS_STATE.acknowledged,mapId:BOSS_STATE.mapId,bossId:BOSS_STATE.bossId,phase:BOSS_STATE.phase},
     rivals:RIVALS.map(r=>({x:r.x,y:r.y,hp:r.hp,maxHp:r.maxHp,angle:r.angle,sTimer:r.sTimer,state:r.state,ptx:r.ptx,pty:r.pty,home:r.home,alertDist:r.alertDist,captureTimer:r.captureTimer||0,raidTargetId:r.raidTarget?r.raidTarget.id:null})),
@@ -4544,6 +4523,7 @@ function saveGame() {
     missions: MIS.map(m=>({status:m.status})),
     safehouses: SAFEHOUSES.map(s=>({id:s.id,owned:s.owned})),
     gu: {...GU},
+    bodyguardStates:GUARDS.map(securityBodyguardState),
     activeMisId: activeMis ? activeMis.id : null,
     misSt: {...misSt},
   };
@@ -4634,7 +4614,7 @@ function loadGame() {
       if(data.ver>=10&&typeof data.minimapVisible==='boolean')minimapVisible=data.minimapVisible;
       rivalPower=Number.isFinite(data.rivalPower)?data.rivalPower:100;
       rivalThink=Number.isFinite(data.rivalThink)?data.rivalThink:0;
-      if(Array.isArray(data.police)){POLICE.length=0;for(const q of data.police)POLICE.push({...q,x:q.x*legacyScale,y:q.y*legacyScale,carHitCd:q.carHitCd||0,lastSeenX:Number.isFinite(q.lastSeenX)?q.lastSeenX*legacyScale:P.x,lastSeenY:Number.isFinite(q.lastSeenY)?q.lastSeenY*legacyScale:P.y,searchTimer:Number.isFinite(q.searchTimer)?q.searchTimer:3000,hasVisual:!!q.hasVisual,kind:'police'});}
+      if(Array.isArray(data.police)){POLICE.length=0;for(const q of data.police)POLICE.push({...q,x:q.x*legacyScale,y:q.y*legacyScale,carHitCd:q.carHitCd||0,lastSeenX:Number.isFinite(q.lastSeenX)?q.lastSeenX*legacyScale:P.x,lastSeenY:Number.isFinite(q.lastSeenY)?q.lastSeenY*legacyScale:P.y,searchTimer:Number.isFinite(q.searchTimer)?q.searchTimer:3000,searchPhase:Number.isFinite(q.searchPhase)?Math.max(0,Math.min(Math.PI*2,q.searchPhase)):0,hasVisual:!!q.hasVisual,kind:'police'});}
       if(Array.isArray(data.enemies)){
         ENEMIES.length=0;
         for(const raw of data.enemies){
@@ -4668,6 +4648,8 @@ function loadGame() {
     recalcIncome();
     checkDistricts();
     syncGuards();
+    // Do not resurrect defeated personal bodyguards just by reloading the save.
+    securityRestoreGuards(data.ver>=21?data.bodyguardStates:null);
     syncAllPropGuards();
     syncAllSafehouseGuards();
     renderWeaponHUD();
