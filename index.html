@@ -1646,7 +1646,7 @@ function updateFamilyBoss(b,dt){
   else if(BOSS_STATE.phase>=1&&dist<desired-55)moveTowardWorld(b,b.x-(P.x-b.x),b.y-(P.y-b.y),moveSpeed*.72,dt,actorBodyRadius(b),b.navSeed);
   b.wt+=dt;if(b.wt>105){b.wf=(b.wf+1)%6;b.wt=0;}
   b.sTimer-=dt;
-  if(b.sTimer<=0&&dist<520&&!worldLineBlocked(b.x,b.y,P.x,P.y,5)){
+  if(b.sTimer<=0&&!b.bossWarning&&dist<520&&!worldLineBlocked(b.x,b.y,P.x,P.y,5)){
     const shots=[1,3,5][BOSS_STATE.phase],spread=[.05,.18,.27][BOSS_STATE.phase];
     for(let i=0;i<shots;i++)fireAt(b.x,b.y,'enemy',P.x,P.y,{spread,dmg:def.dmg*(1+BOSS_STATE.phase*.12),range:620});
     b.sprShoot=220;b.sTimer=[760,620,490][BOSS_STATE.phase];
@@ -2522,7 +2522,9 @@ function performMelee(){
   addScreenShake(best?4:1.5);
   if(!best)return;
   const a=best.a,ang=Math.atan2(a.y-P.y,a.x-P.x),dmg=42;
-  a.hp-=dmg;spawnBlood(a.x,a.y,7);showCombatText(a.x,a.y-34,'-'+dmg,'#ffb0a0');
+  a.hp-=dmg;
+  if(best.kind==='enemy')combatReactToHit(a,dmg,'body');
+  spawnBlood(a.x,a.y,7);showCombatText(a.x,a.y-34,'-'+dmg,'#ffb0a0');
   moveEntityWorld(a,Math.cos(ang)*18,Math.sin(ang)*18,17);
   if(best.kind==='police')GS.addHeat(CFG.HEAT_SHOT*1.5);
   if(a.hp<=0){
@@ -4636,9 +4638,12 @@ function loadGame() {
           const e={...raw,x:raw.x*legacyScale,y:raw.y*legacyScale};
           if(e.isBoss)combatBossWarningRestore(e);
           combatInitEnemy(e);
-          // World position memories used the old v7–v11 map scale.
-          e.aiLastX*=legacyScale;e.aiLastY*=legacyScale;
-          e.aimX*=legacyScale;e.aimY*=legacyScale;
+          // Only scale stored legacy coordinates once. Missing memory fields
+          // were just initialized from the already-scaled entity position.
+          e.aiLastX=Number.isFinite(raw.aiLastX)?raw.aiLastX*legacyScale:e.x;
+          e.aiLastY=Number.isFinite(raw.aiLastY)?raw.aiLastY*legacyScale:e.y;
+          e.aimX=Number.isFinite(raw.aimX)?raw.aimX*legacyScale:e.x;
+          e.aimY=Number.isFinite(raw.aimY)?raw.aimY*legacyScale:e.y;
           ENEMIES.push(e);
         }
       }
