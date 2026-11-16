@@ -1,4 +1,60 @@
-# CHECKPOINT ATUAL — GODFATHER v8.12.0
+# CHECKPOINT ATUAL — GODFATHER v8.13.0
+
+**Atualizado em:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.6  
+**Status:** Fase 4 — sistemas de veículos e garagem implementados, publicados e verificados por testes de lógica. Playtests de navegador real e medição de FPS ainda pendentes.
+
+## Diagnóstico antes de implementar
+- Um único modelo de carro com velocidade máxima, giro, aceleração e cor fixos; compra/garagem inexistentes.
+- Controle quase exclusivamente por clique: o carro navegava até o alvo, sem condução direta por WASD.
+- Batidas e combate usavam um único HP de carro, sem upgrades de blindagem/motor.
+- Após destruição, o jogo recuperava automaticamente **100% do HP em 8 segundos** com `setTimeout`, sem pausa e sem custo. Isso anulava a utilidade de reparos.
+- O save antigo guardava apenas posição, HP e velocidade do carro, sem modelo, garagem ou upgrades.
+
+## Implementado na v8.13
+- **Novo módulo `js/garage-system.js`:** garagem persistente com compra, escolha de veículo, propriedade, upgrades por modelo, conservação individual, manutenção, saldo validado e bloqueio de operações fora da garagem ou durante fuga policial.
+- **Quatro veículos com física distinta:**
+  - Sedã Corleone: 100 HP, velocidade 10, aceleração 0,45; inicial gratuito.
+  - Falcão GT: $5.500; 82 HP, velocidade 13, aceleração 0,65.
+  - Fúria V8: $10.500; 135 HP, velocidade 11,4, aceleração 0,77.
+  - Fortaleza Blindada: $18.500; 190 HP, velocidade 8,8, aceleração 0,35.
+  - HP acompanha o multiplicador de dificuldade da cidade, como já acontecia com o carro original.
+- **Upgrades mecânicos** individuais de Motor (velocidade/arrancada), Direção (giro) e Blindagem (vida máxima/mitigação de dano), três níveis cada; custos escalonados por classe.
+- **Direção direta WASD** integrada ao `CAR.update`, com ré, freio por tecla contrária e esterço influenciado pela velocidade. Ao pressionar teclas, cancela o destino por clique. O controle antigo por clique permanece funcionando.
+- **Reparos pagos** na garagem; upgrades de HP conservam o percentual de dano, e trocar de veículo não pode realizar reparos gratuitos.
+- **Destruição:** jogador sai do carro, contador de socorro é baseado no tempo da simulação (respeita pausa), e o veículo retorna com apenas 25% do HP após oito segundos. Reparo total exige pagamento. Trocar para um veículo destruído inicia o mesmo tempo de socorro.
+- **Interface e gráficos:** nova aba Garagem na barra lateral, entrada pelo botão **E** perto do ponto físico da garagem (próximo à posição inicial do carro), ponto no minimapa, marcação no mundo e HUD do veículo apenas quando dirigindo. Todos os quatro modelos têm cores, escala e detalhes próprios via Canvas, sem assets externos.
+- **Save v23:** novo campo `garage` guarda `selected` e `vehicles` com `owned`, `engine`, `handling`, `armor` e `condition`. `car.recoveryTimer` mantém o contador de socorro. Mantém chave `gf_save_v7`, aceita saves v7–v22 (sedã inicial e upgrades zerados) e aplica limites mecânicos antes do HP e velocidade salvos.
+- **Compatibilidade:** um único `CAR` continua sendo usado pelos sistemas de cidade, perseguidores, colisões, missões e autosave. Não há quatro veículos simultaneamente ativos no mapa.
+
+## Arquivos e commits
+1. `js/garage-system.js` — módulo de veículos: `21f37aed0ddc9230e7a6f4d2a19bd5cfdb4a63b8`.
+2. `css/garage-system.css` — UI da garagem: `5ba8897ec7098150493cd2400318308873de7d97`.
+3. `index.html` — menu, aba, entrada na garagem: `170c562dbc74e867cc5c66cc87d437b64b17af73`.
+4. `index.html` — condução WASD e recuperação por simulação: `a9c06705e35f69d7bae2762f9267de9042a6ed68`.
+5. `index.html` — salvar/carregar garagem, HUD e minimapa: `49082eabfcb53c8bda0832bc78c50059facec1a0`.
+6. `index.html` — gráficos distintos dos quatro carros: `244e94e25e7654cd3818c7c6e80ba63009a2e122`.
+7. `js/garage-system.js` — migração legada e prevenção de reparo grátis: `67734c2d1def0245f4a4c6aa4c8690b08b526054`.
+8. `tests/garage-system.test.cjs` — regressão Node reproduzível: `9322026da349e693b7066bf553a77b7678ff580b`.
+9. `js/garage-system.js` — veículos destruídos também respeitam socorro após troca: `6b5f06b903ae21482fa24a298ee15b3714827ac7`.
+10. `GDD_GODFATHER_COMPLETO.md` — revisão 1.6: `87bcdb1b64f72e3b8788022b01a50eeb27777aa6`.
+11. `index.html` — roadmap dentro do jogo revisado: `2fa76fd97d178fd0112c74c4eded7cefdbcc0428`.
+
+## Testes desta etapa
+- **52 verificações em ambiente JavaScript simulado**: disponibilidade, compras, saldo, quatro modelos, diferenças reais de física, HP, direção, blindagem, compra de três trilhas, repair, ressarcimento proibido por troca, WASD, direção por clique, destruição/socorro, save da garagem e migração de versão anterior — passaram.
+- **14 verificações de save v23 e legado**: versões 17/19/21/22/23, carros bloqueados, seleção inválida, nível >3, HP/conservação acima de 100%, propriedade obrigatória do sedã e dados insuficientes — passaram.
+- Sintaxe combinada dos módulos mais o script inline, verificação estática de integração e sintaxe do teste `tests/garage-system.test.cjs` — passaram.
+- **Não testado:** execução da suíte Node em runner real, smoke test no navegador e avaliação de sensação de condução, colisões, perseguições, HUD/GPS em diferentes tamanhos de tela e FPS. Não confundir testes simulados com teste visual aprovado.
+
+## Próximos passos — Fase 4
+1. Rodar `node --test tests/*.test.cjs` em um clone local/CI e corrigir falhas observadas.
+2. Playtest da direção WASD/clique e colisões com os quatro carros; testar garagem nas três cidades, upgrades, reparo com dinheiro insuficiente, troca e carregamento de save v22.
+3. Melhorar comportamento de tráfego urbano: desvio, prioridade de passagem, carros/pedestres e impacto no desempenho, sem quebrar o motor existente.
+4. Expandir interiores específicos por cidade e eventos narrativos, com variação efetiva de jogabilidade e saves estáveis.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.12.0
 
 **Atualizado em:** 16/11/2026  
 **GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.5  
