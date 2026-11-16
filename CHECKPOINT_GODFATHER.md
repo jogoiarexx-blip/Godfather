@@ -1,4 +1,54 @@
-# CHECKPOINT ATUAL — GODFATHER v8.10.0
+# CHECKPOINT ATUAL — GODFATHER v8.11.0
+
+**Atualizado em:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md), revisão 1.4  
+**Status:** Fase 3 — combate/IA avançada (progresso real publicado). Alterações verificadas por testes de lógica e sintaxe; playtests completos em navegador real ainda pendentes.
+
+## Diagnóstico
+1. Guarda-costas escolhiam o inimigo mais próximo inclusive atrás de obstáculos; perdiam oportunidades de defender o protagonista quando o adversário estava perto dele.
+2. Guarda-costas perseguiam e atacavam policiais mesmo depois de zeradas as estrelas, iniciando conflitos desnecessários.
+3. A polícia detectava o jogador a menos de 130 unidades sem verificar paredes, permitindo visão através de edifícios.
+4. O deslocamento da busca policial após perder visão era calculado com `Date.now()`, alterando ângulo apesar de pausa longa.
+5. O reforço do chefe podia ultrapassar a capacidade desejada; o total de dano potencial de rajadas de 5 tiros crescia linearmente sem orçamento.
+6. O estado de vida e substituição dos guarda-costas não era salvo, permitindo recuperá-los apenas recarregando a partida.
+7. Após disparo especial de chefe já avisado, um disparo normal podia acontecer imediatamente depois.
+
+## Alterações funcionais
+- `js/security-tactics.js`: escolta com modos **follow / engage / protect / recover**, ameaça avaliada por proximidade do protagonista e do guarda e linha de visão efetiva.
+- Guarda-costas concentram esforço em proteger o protagonista contra adversários próximos; mantêm distância de escolta quando o alvo está longe e nunca atacam policiais sem estrelas ativas ou com jogador em zona segura.
+- Polícia respeita cobertura mesmo a curta distância; não dispara com 0 estrelas. A busca da última posição vista continua em ronda angular determinística dirigida pelo delta de simulação.
+- Chefes preservam seus especiais exclusivos da v8.10, mas agora as **rajadas normais** de fases 0/1/2 usam 1/3/5 disparos com orçamento de dano total 1,00× / 1,65× / 2,10×; dano por projétil é repartido.
+- Limites de capangas por fase: 3/4/5, com +1 para cidades posteriores. O número gerado é limitado ao espaço disponível e classes de reforços variam por cidade.
+- Recuperação mínima de **620 ms** após o especial de um chefe evita a sobreposição imediata de ataques.
+- `index.html` integrando a nova IA, polícia, chefes, menu e **save v21**, sem alterar a chave `gf_save_v7`.
+- `bodyguardStates` salva HP, estado morto, contador de substituição e contador de tiro de até oito guarda-costas; estados são restaurados depois da aplicação dos upgrades existentes de guardas.
+- O campo de busca policial `searchPhase` agora é salvo e restaurado. Saves de versões v7–v20 continuam aceitos, com migração por defaults.
+- Nova suíte de regressão `tests/security-tactics.test.cjs`, sem dependências externas; comando: `node --test tests/security-tactics.test.cjs`.
+
+## Commits
+- Novo motor: `43dedd77961dccaa0f5236768499980754cca99c`.
+- Integração v8.11: `dc303309b2cf8d8ab83c8786dc4453ae2556d326`.
+- Intervalo após especiais: `24807d3c4be4b992d244762ceb50062e8a9921b7`.
+- GDD v1.4: `500d852edf0fffa302d9f671f397d87f81499e24`.
+- Testes Node reproduzíveis: `0bac3c526c962f699b3313d98c58776dbf477054`.
+
+## Testes feitos
+- **37 verificações funcionais no ambiente JavaScript**: escolta, ameaças, polícia pacífica, tiro bloqueado, modo protect, vida/respawn, serialização, busca policial determinística, orçamento de rajadas e reforços — passaram.
+- **10 verificações de compatibilidade/integridade de save**: v17/v20/v21, HP/guardas, timer impossível, searchPhase não finito, dados ausentes e dinheiro negativo — passaram.
+- **6 verificações de visão policial**: cobertura curta e média, zona segura, distância máxima e linha livre — passaram.
+- **Sintaxe combinada** dos quatro módulos novos e do script principal — passou.
+- Suíte `tests/security-tactics.test.cjs` foi criada e sua sintaxe verificada, mas **a execução real via Node não pôde ser concluída neste ambiente**: o container não resolve `github.com` para buscar a cópia publicada.
+- **Pendente:** executar testes visuais e de FPS no GitHub Pages, validar jogo completo, chefes em todas as cidades e importar saves anteriores em navegador real. Não afirmar aprovação desses cenários.
+
+## Próxima fase recomendada
+1. Rodar `node --test tests/security-tactics.test.cjs` em um clone local/CI para confirmar a suíte persistente.
+2. Playtests completos das batalhas de Barzini, Tattaglia e Stracci com armas base e evoluídas; medir tempo até derrotar cada chefe, taxa de dano e eficácia das esquivas.
+3. Validar batalha polícia/guarda e perseguição com 5 estrelas e múltiplos policiais; conferir ausência de queda de FPS.
+4. Concluir pendências da Fase 3 e iniciar **Fase 4 — mundo, veículos, conteúdo e missões** conforme GDD.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.10.0
 
 **Atualizado em:** 16/11/2026  
 **GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md), revisão 1.3  
