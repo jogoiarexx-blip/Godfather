@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.2 • **Data:** 16/11/2026  
+**Versão do documento:** 1.3 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -34,7 +34,7 @@
 | Territórios | 6 distritos por cidade = 18 | [ATUAL] |
 | Negócios | 12 por cidade = 36 | [ATUAL] |
 | Missões | 8 modelos adaptados a cada cidade = 24 missões da campanha | [ATUAL] |
-| Chefes | Barzini, Tattaglia, Stracci; cada um com 3 fases | [ATUAL] |
+| Chefes | Barzini, Tattaglia, Stracci; três fases e ataques especiais exclusivos com aviso visual | [ATUAL — v8.10] |
 | Armas | Pistola, shotgun e metralhadora | [ATUAL] |
 | Compra de armas e munição | Oficina do negociante com compra selecionável, pacotes e reabastecimento completo | [ATUAL — v8.9] |
 | Vida máxima aprimorável | 100 → 250 HP, compras por níveis no painel Personagem | [ATUAL — v8.8] |
@@ -500,7 +500,7 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 18**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 20**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
 ### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
@@ -520,6 +520,12 @@ O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níve
       { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, bagLevel: 0 },
       { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, bagLevel: 0 }
     ]
+
+### 19.3 Extensão v20 — estado tático e avisos de chefe [ATUAL]
+
+O save v20 mantém as versões v7–v19 aceitas e grava os campos de IA dos inimigos de rua: `aiMemory`, `aiLastX`, `aiLastY`, `strafeSide`, `strafeTimer`, `aimTimer`, `aimX` e `aimY`. Chefes também gravam `bossWarning` com tipo, direção, duração, tempo restante e fase. Dessa forma, carregar a partida não reinicia arbitrariamente o aviso de ataque especial já iniciado. O sistema sanitiza avisos inválidos e restaura memória tática padrão quando o save anterior não possui esses campos.
+
+**Notas de combate v8.10:** inimigos comuns precisam ter linha de visão para atirar; se perderem o alvo, procuram brevemente a última posição confirmada. Atiradores fazem mira de 750 ms com linha visível. Brutamontes disparam dois projéteis reduzidos para manter o dano próximo do orçamento original. Chefes interrompem o disparo normal durante o ataque sinalizado. Os três padrões exigem playtest real para calibrar justiça e dificuldade.
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
@@ -600,13 +606,13 @@ O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níve
 
 **Entrega:** todas as três armas possuem progressão própria e munição pode ser comprada de forma intuitiva.
 
-### Fase 3 — COMBATE E IA
+### Fase 3 — COMBATE E IA [EM ANDAMENTO v8.10]
 
-1. Refinar animações, dano e resposta de impacto.
-2. Melhorar IA dos quatro arquétipos e comportamento de guardas.
-3. Validar colisões e perseguição policial.
-4. Rebalancear chefes para as novas curvas de HP e dano.
-5. Criar padrões exclusivos de chefes por cidade.
+1. [PARCIAL] Reações a headshot e melee; decaimento correto de animações de disparo em interiores.
+2. [PARCIAL] IA tática dos quatro arquétipos com busca, memória de última visão, flanco e aviso de mira. Melhorias de guarda-costas permanecem pendentes.
+3. [PENDENTE] Validar colisões, cobertura e perseguição policial com sessões completas de navegador.
+4. [PENDENTE] Rebalancear chefes e inimigos para HP máximo 250 e armas evoluídas, com métricas de tempo de combate.
+5. [ATUAL] Padrões especiais exclusivos e telegráficos: Barzini — anel radial; Tattaglia — rajada frontal em leque; Stracci — fogo cruzado. Novos sinais com 850/1020/1180 ms de antecipação por chefe.
 
 ### Fase 4 — MUNDO E MISSÕES
 
@@ -668,4 +674,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** validar o v8.9 ponta a ponta no navegador, especialmente loja, combate externo/interno, continuação de saves v18 e a economia de Palermo/Chicago. Depois avançar para **Fase 3 — combate, IA e balanceamento dos chefes**. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
+**Próxima implementação recomendada:** executar playtests visuais do v8.10 em navegador (interiores, rua, 3 chefes, saves antigos) e, depois, aprimorar guarda-costas, patrulhas e balanceamento da Fase 3. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
