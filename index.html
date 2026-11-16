@@ -1221,7 +1221,8 @@ function loadMap(mapId) {
   CAR.x=S(def.carStart.x); CAR.y=S(def.carStart.y);
   {const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;}
   CAR.maxHp = Math.round(100 * (1 + (em-1)*0.5)); // scales with enemy difficulty
-  CAR.hp=CAR.maxHp; CAR.speed=0; CAR.angle=0; CAR.useTarget=false;
+  CAR.hp=CAR.maxHp; CAR.speed=0; CAR.angle=0; CAR.useTarget=false;CAR.recoveryTimer=0;
+  garageMapInit();
   GS.inCar=false;
 
   // Dealer — align to the new walkable street geometry.
@@ -1285,7 +1286,8 @@ async function loadMapReal(mapId){
   });
   await cityLoadStep(62,'PLAYER & CARRO','Posicionando você, seu carro e a câmera...',()=>{
     P.x=S(def.playerStart.x); P.y=S(def.playerStart.y); {const fp=findFreePoint(P.x,P.y,13);P.x=fp.x;P.y=fp.y;} P.hp=P.maxHp; P.invincible=0;
-    CAR.x=S(def.carStart.x); CAR.y=S(def.carStart.y); {const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;} CAR.maxHp=Math.round(100*(1+(def.enemyMult-1)*0.5)); CAR.hp=CAR.maxHp; CAR.speed=0; CAR.angle=0; CAR.useTarget=false; GS.inCar=false;
+    CAR.x=S(def.carStart.x); CAR.y=S(def.carStart.y); {const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;} CAR.maxHp=Math.round(100*(1+(def.enemyMult-1)*0.5)); CAR.hp=CAR.maxHp; CAR.speed=0; CAR.angle=0; CAR.useTarget=false;CAR.recoveryTimer=0; GS.inCar=false;
+    garageMapInit();
   });
   await cityLoadStep(76,'DIFICULDADE','Calibrando poder inimigo e estado da cidade...',()=>{
     const em = def.enemyMult; CFG.EHP=Math.round(60*em); CFG.EDMG=Math.round(8*em); CFG.RHP=Math.round(80*em); CFG.COHP=Math.round(80*em); CFG.CODMG=Math.round(12*em);
@@ -3705,6 +3707,7 @@ function guBuy(key, lv) {
 }
 function updateHUD(){
   playerProgressHud();
+  garageHud();
   document.getElementById('hmoney').textContent='$'+Math.floor(GS.money).toLocaleString('pt-BR');
   document.getElementById('hresp').textContent=GS.respect.toLocaleString('pt-BR');
   const rk=getRank(GS.respect);const re=document.getElementById('hrank');re.textContent=rk.name;re.style.color=rk.color;
@@ -4322,6 +4325,7 @@ function drawMinimap(){
   for(const r of WORLD_ALL_ROADS){c.lineWidth=Math.max(1,r[4]*sx*.38);c.beginPath();c.moveTo(r[0]*sx,r[1]*sy);c.lineTo(r[2]*sx,r[3]*sy);c.stroke();}
   for(const p of PROPS){c.fillStyle=p.owned?'#49bd6b':'#d9ad42';c.beginPath();c.arc(p.x*sx,p.y*sy,4,0,Math.PI*2);c.fill();}
   c.fillStyle='#b26cff';c.beginPath();c.arc(DEALER.x*sx,DEALER.y*sy,3.5,0,Math.PI*2);c.fill();
+  garageMinimap(c,sx,sy);
   for(const sh of SAFEHOUSES)if(sh.owned){c.fillStyle='#43d97a';c.fillRect(sh.x*sx-3,sh.y*sy-3,6,6);}
   if(GS.stars>0){for(const p of POLICE){if(Math.hypot(p.x-P.x,p.y-P.y)<700){c.fillStyle='#5c92ff';c.beginPath();c.arc(p.x*sx,p.y*sy,2.8,0,Math.PI*2);c.fill();}}}
   if(CITY_LIFE.event){c.fillStyle=CITY_LIFE.event.type==='ambush'?'#e04a42':CITY_LIFE.event.type==='ammo'?'#78bfff':'#e5c24d';c.beginPath();c.arc(CITY_LIFE.event.x*sx,CITY_LIFE.event.y*sy,3.6,0,Math.PI*2);c.fill();}
@@ -4432,6 +4436,7 @@ function loop(ts) {
   ctx.translate(-GS.camX+shakeX, -GS.camY+HUD_H+shakeY);
 
   drawWorld();
+  garageDrawMarker(ctx);
   drawCityLife();
   drawPursuitSystem();
 
@@ -4562,7 +4567,7 @@ let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function isValidSaveData(d){
-  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22].includes(d.ver))return false;
+  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23].includes(d.ver))return false;
   if(!Number.isInteger(d.mapId)||d.mapId<0||d.mapId>=MAP_DEFS.length)return false;
   if(!Number.isFinite(d.money)||d.money<0||!Number.isFinite(d.respect)||d.respect<0)return false;
   if(!Number.isFinite(d.px)||!Number.isFinite(d.py))return false;
@@ -4584,12 +4589,13 @@ function isValidSaveData(d){
     if(!Array.isArray(d.police)||!d.police.every(p=>p&&Number.isFinite(p.searchPhase)&&p.searchPhase>=0&&p.searchPhase<=Math.PI*2))return false;
   }
   if(d.ver>=22&&(!cityContractsValid(d.cityContracts)||(d.cityContracts.active&&d.cityContracts.active.city!==d.mapId)))return false;
+  if(d.ver>=23&&!garageSchemaValid(d.garage))return false;
   return true;
 }
 
 function saveGame() {
   const data = {
-    ver: 22,
+    ver: 23,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4603,7 +4609,8 @@ function saveGame() {
     cityContracts:cityContractsSnapshot(),
     heat:GS.heat, stars:GS.stars, wantedTimer:GS.wantedTimer, wantedClearing:GS.wantedClearing,
     inCar:INTERIOR.active?false:GS.inCar,
-    car:{x:CAR.x,y:CAR.y,hp:CAR.hp,maxHp:CAR.maxHp,angle:CAR.angle,speed:CAR.speed},
+    car:{x:CAR.x,y:CAR.y,hp:CAR.hp,maxHp:CAR.maxHp,angle:CAR.angle,speed:CAR.speed,recoveryTimer:CAR.recoveryTimer||0},
+    garage:garageSave(),
     sprintStamina,
     gameMinutes, minimapVisible,
     rivalPower, rivalThink,
@@ -4647,6 +4654,7 @@ function loadGame() {
     restorePlayerProgress(data.ver>=18?data.playerProgress:null);
     // Weapons are reset to base stats on legacy saves, then upgraded on v19.
     weaponProgressRestore(data.ver>=19?data.weaponProgress:null);
+    garageRestore(data.ver>=23?data.garage:null);
 
     // Restore GS
     GS.money = data.money;
@@ -4705,7 +4713,17 @@ function loadGame() {
 
     // Restore transient world state in v8 so saving cannot be used to clear a pursuit or raid.
     if(data.ver>=8){
-      if(data.car){CAR.x=data.car.x*legacyScale;CAR.y=data.car.y*legacyScale;CAR.hp=Math.max(1,Math.min(CAR.maxHp,data.car.hp||CAR.maxHp));CAR.angle=data.car.angle||0;CAR.speed=data.car.speed||0;CAR.useTarget=false;const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;}
+      if(data.car){
+        CAR.x=data.car.x*legacyScale;CAR.y=data.car.y*legacyScale;
+        CAR.hp=Number.isFinite(data.car.hp)?Math.max(0,Math.min(CAR.maxHp,data.car.hp)):CAR.maxHp;
+        CAR.angle=Number.isFinite(data.car.angle)?data.car.angle:0;
+        const stats=garageStats();
+        CAR.speed=Number.isFinite(data.car.speed)?Math.max(-stats.reverse,Math.min(stats.maxSpeed,data.car.speed)):0;
+        CAR.recoveryTimer=CAR.hp<=0?(Number.isFinite(data.car.recoveryTimer)?Math.max(100,Math.min(8000,data.car.recoveryTimer)):8000):0;
+        CAR.useTarget=false;
+        const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;
+        garageCapture();
+      }
       GS.inCar=!!data.inCar;
       sprintStamina=Number.isFinite(data.sprintStamina)?Math.max(0,Math.min(progressMaxStamina(),data.sprintStamina)):progressMaxStamina();
       if(data.ver>=10&&Number.isFinite(data.gameMinutes))gameMinutes=((data.gameMinutes%1440)+1440)%1440;
@@ -4908,6 +4926,7 @@ function resetCampaignProgress(){
   GS.heat=0;GS.stars=0;GS.wantedTimer=0;GS.wantedClearing=false;GS.camX=0;GS.camY=0;
   resetPlayerProgress();
   cityContractsReset();
+  garageReset();
   P.hp=P.maxHp;P.invincible=0;P.angle=0;P.wFrame=0;P.wTimer=0;P.sprShoot=0;P.moving=false;
   curWeapon=0;weaponOwned=[true,false,false];
   weaponProgressReset();
