@@ -516,9 +516,9 @@ O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níve
       medkits: { bandage: 0, standard: 0, emergency: 0 }
     },
     weaponProgress: [
-      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, ammoBagLevel: 0 },
-      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, ammoBagLevel: 0 },
-      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, ammoBagLevel: 0 }
+      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, bagLevel: 0 },
+      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, bagLevel: 0 },
+      { damageLevel: 0, magazineLevel: 0, reloadLevel: 0, accuracyLevel: 0, bagLevel: 0 }
     ]
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
@@ -589,7 +589,7 @@ O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níve
 
 **Entrega:** personagem pode crescer de 100 até 250 HP e usar equipamentos de sobrevivência com economia real.
 
-### Fase 2 — ARMAS E MUNIÇÃO [IMPLEMENTADA v8.9, validação visual pendente]
+### Fase 2 — ARMAS E MUNIÇÃO [BASE FUNCIONAL v8.9 — balanceamento e validação visual pendentes]
 
 1. Criar loja visual dividida em Armas, Munição e Melhorias; suprimentos permanecem na aba Personagem.
 2. Manter funcionalidade existente de compra de shotgun e metralhadora.
