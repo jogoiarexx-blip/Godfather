@@ -1214,7 +1214,7 @@ function loadMap(mapId) {
   if(typeof resetCityLife==='function')resetCityLife();
   shootCD=0; mDown=false; mFireTimer=0; autoSaveTimer=0;
   comboCount=0; comboTimer=0;
-  _lastPlayerDists=0; _conquestTriggered=false;
+  _lastPlayerDists=0; _conquestTriggered=false; _bossSummonRemaining=0;
   const comboEl=document.getElementById('combo-disp'); if(comboEl) comboEl.style.opacity='0';
 
   // Update title
@@ -1256,7 +1256,7 @@ async function loadMapReal(mapId){
   });
   await cityLoadStep(76,'DIFICULDADE','Calibrando poder inimigo e estado da cidade...',()=>{
     const em = def.enemyMult; CFG.EHP=Math.round(60*em); CFG.EDMG=Math.round(8*em); CFG.RHP=Math.round(80*em); CFG.COHP=Math.round(80*em); CFG.CODMG=Math.round(12*em);
-    rivalPower=100; rivalThink=0; GS.heat=0; GS.stars=0; GS.wantedClearing=false; GS.wantedTimer=0; policeDispatchLevel=0; GS.inSafe=false; GS._wasSafe=false; GS.won=false; GS.paused=true; hpSpawnTimer=0; shootCD=0; mDown=false; mFireTimer=0; autoSaveTimer=0; comboCount=0; comboTimer=0; _lastPlayerDists=0; _conquestTriggered=false;
+    rivalPower=100; rivalThink=0; GS.heat=0; GS.stars=0; GS.wantedClearing=false; GS.wantedTimer=0; policeDispatchLevel=0; GS.inSafe=false; GS._wasSafe=false; GS.won=false; GS.paused=true; hpSpawnTimer=0; shootCD=0; mDown=false; mFireTimer=0; autoSaveTimer=0; comboCount=0; comboTimer=0; _lastPlayerDists=0; _conquestTriggered=false; _bossSummonRemaining=0;
   });
   await cityLoadStep(88,'NPCs & VIDA','Carregando rivais, guardas, casas e população...',()=>{
     document.title='Godfather — '+def.name;
@@ -1576,6 +1576,7 @@ function checkDistricts() { for (const d of DIST) { const ps=PROPS.filter(p=>p.d
 function playerDists() { return DIST.filter(d=>d.owner==='player').length; }
 let _lastPlayerDists = 0;
 let _conquestTriggered = false;
+let _bossSummonRemaining = 0;
 
 const FAMILY_BOSSES=[
   {id:'barzini',name:'Don Vittorio Barzini',title:'Chefe da Família Barzini',icon:'🌹',hp:950,speed:.92,dmg:16,rewardMoney:25000,rewardRespect:1400},
@@ -1602,7 +1603,7 @@ function updateBossHUD(){
 }
 function bossWaypoint(){const b=BOSS_STATE.boss;return BOSS_STATE.active&&b?{x:b.x,y:b.y,name:'CHEFE · '+bossDef().name}:null;}
 function startFamilyBossBattle(){
-  if(BOSS_STATE.active||BOSS_STATE.defeated||GS.gameOver||GS.won)return;
+  if(BOSS_STATE.active||BOSS_STATE.defeated||GS.gameOver||GS.won||playerDists()!==6||mainMenuActive||!gameSessionStarted)return;
   const def=bossDef(),anchor=PROPS[11]||PROPS[PROPS.length-1]||{x:CFG.WW*.72,y:CFG.WH*.62};
   const fp=findFreePoint(anchor.x+S(95),anchor.y+S(105),32,300);
   ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;BULLETS.length=0;
@@ -1663,14 +1664,16 @@ function finishFamilyBoss(dead){
   addScreenShake(8);saveGame();
   setTimeout(()=>{if(!GS.gameOver&&!GS.won)showMapConquestScreen();},1800);
 }
-function checkConquest() {
-  const pd = playerDists();
-  if(pd===6 && !_conquestTriggered && !GS.won && !GS.gameOver) {
-    _conquestTriggered = true;
-    _lastPlayerDists = 6;
-    setTimeout(()=>startFamilyBossBattle(),1200);
+function checkConquest(dt){
+  const pd=playerDists();
+  // Countdown in simulation time: never spawn during pause/menu.
+  if(pd<6&&!BOSS_STATE.active&&!BOSS_STATE.defeated){_bossSummonRemaining=0;_conquestTriggered=false;}
+  if(pd===6&&!_conquestTriggered&&!GS.won&&!GS.gameOver){_conquestTriggered=true;_bossSummonRemaining=1200;}
+  if(_bossSummonRemaining>0){
+    _bossSummonRemaining=Math.max(0,_bossSummonRemaining-dt);
+    if(_bossSummonRemaining===0&&pd===6&&!GS.won&&!GS.gameOver&&!BOSS_STATE.active&&!BOSS_STATE.defeated)startFamilyBossBattle();
   }
-  _lastPlayerDists = pd;
+  _lastPlayerDists=pd;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2717,7 +2720,20 @@ function updateRivals(dt) {
           a.captureTimer -= dt;
           if(a.captureTimer > 0) continue; // still waiting
           // No guards AND timer expired — capture the property
-          if(a.raidTarget.owned){a.raidTarget.owned=false;recalcIncome();checkDistricts();const rn=MAP_DEFS[currentMapId]?MAP_DEFS[currentMapId].rival:'Barzini';showMsg('💀 '+rn+' retomou: '+a.raidTarget.name+'!','d');GS.respect=Math.max(0,GS.respect-150);misEvent('property_lost');}
+          if(a.raidTarget.owned){
+            a.raidTarget.owned=false;
+            const lostDistrict=DIST.find(d=>d.id===a.raidTarget.dist);
+            if(lostDistrict&&lostDistrict.owner==='player'){
+              const origin=MAP_DEFS[currentMapId].districts.find(d=>d.id===lostDistrict.id);
+              lostDistrict.owner=origin?.owner==='neutral'?'neutral':'rival';
+              showMsg('🏘️ Distrito disputado: '+lostDistrict.name,'d');
+            }
+            syncPropGuards(a.raidTarget);
+            recalcIncome();checkDistricts();
+            showMsg('💀 '+MAP_DEFS[currentMapId].rival+' retomou: '+a.raidTarget.name+'!','d');
+            GS.respect=Math.max(0,GS.respect-150);
+            GS.rank=getRank(GS.respect);syncGuards();misEvent('property_lost');
+          }
           RIVALS.splice(i,1); continue;
         }
       }
@@ -4336,7 +4352,7 @@ function loop(ts) {
       updateShake();
       misTick();
       checkDistricts();
-      checkConquest();
+      checkConquest(dt);
       tickAutoSave(dt);
       // Camera
       const vw=window.innerWidth, vh=window.innerHeight-HUD_H;
@@ -4745,10 +4761,31 @@ document.querySelectorAll('#menu-actions .menu-btn,.menu-back').forEach(b=>b.add
 function ensureLoop(){if(!loopStarted){loopStarted=true;lastT=performance.now();loopRaf=requestAnimationFrame(loop);}}
 function stopLoop(){if(loopRaf){cancelAnimationFrame(loopRaf);loopRaf=0;}loopStarted=false;}
 
+function resetCampaignProgress(){
+  // A true restart resets mutable gameplay systems, not just the map.
+  GS.money=1000;GS.respect=0;GS.rank=RANKS[0];GS.killCount=0;GS.policeKills=0;
+  GS.gameOver=false;GS.won=false;GS.paused=true;GS.inCar=false;GS.passiveIncome=0;
+  GS.heat=0;GS.stars=0;GS.wantedTimer=0;GS.wantedClearing=false;GS.camX=0;GS.camY=0;
+  P.hp=P.maxHp;P.invincible=0;P.angle=0;P.wFrame=0;P.wTimer=0;P.sprShoot=0;P.moving=false;
+  curWeapon=0;weaponOwned=[true,false,false];
+  for(const w of WEAPONS){w.ammo=w.maxAmmo;w.clip=w.magSize;}
+  for(const k of Object.keys(GU))GU[k]=0;
+  for(const m of MIS)m.status='locked';
+  activeMis=null;misSt.escaped=false;misSt.hadHeat=false;misSt.killBase=0;
+  INTERIOR.active=false;INTERIOR.prop=null;INTERIOR.returnPos=null;INTERIOR.template=null;
+  INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;INTERIOR.missionComplete=false;
+  sprintStamina=100;isSprinting=false;keysDown.clear();
+  _conquestTriggered=false;_bossSummonRemaining=0;
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('map-conquest').style.display='none';
+  document.getElementById('pause-menu')?.classList.remove('on');
+  pauseMenuActive=false;setBuildingLoading(false);
+}
+
 async function startNewGame(){
   if(hasSave()&&!confirm('Existe um save atual. Iniciar um novo jogo vai substituir esse progresso. Continuar?'))return;
   ensureAudio();if(AUDIO.ctx?.state==='suspended')AUDIO.ctx.resume();playSfx('ui');
-  deleteSave();SAFEHOUSES.length=0;gameMinutes=9*60;minimapVisible=true;const mmw=document.getElementById('minimap-wrap');if(mmw)mmw.classList.remove('off');
+  deleteSave();resetCampaignProgress();SAFEHOUSES.length=0;gameMinutes=9*60;minimapVisible=true;const mmw=document.getElementById('minimap-wrap');if(mmw)mmw.classList.remove('off');
   GS.paused=true;closeMenuPanels();await preloadSpriteAssets(true);
   const splash=document.getElementById('splash');splash.classList.add('hide');await waitMs(350);splash.style.display='none';
   await loadMapReal(0);setBuildingLoading(false);leaveMainMenu();GS.paused=false;kbRender();renderWeaponHUD();ensureLoop();startGameMusic();
