@@ -1,0 +1,16 @@
+/* Godfather v8.8 — character upgrade interface */
+.player-progress-summary{padding:12px;background:linear-gradient(145deg,rgba(212,175,55,.10),rgba(72,33,24,.12));border:1px solid rgba(212,175,55,.32);border-radius:10px;font:700 12px 'Cinzel',serif;color:#e8d5a3;line-height:1.8;margin-bottom:12px}
+.player-progress-hint{font:13px 'Crimson Text',serif;color:#bca478;line-height:1.45;padding:5px 0 12px}
+.player-progress-section{font:700 11px Cinzel,serif;letter-spacing:1.2px;color:#ebca69;border-bottom:1px solid rgba(212,175,55,.18);padding:15px 0 7px;margin:0 0 10px}
+.player-progress-card{border:1px solid rgba(212,175,55,.17);border-radius:10px;padding:11px;margin-bottom:9px;background:linear-gradient(140deg,rgba(36,25,20,.45),rgba(10,9,9,.76));display:flex;flex-direction:column;gap:7px}
+.player-progress-card strong{font:700 12px Cinzel,serif;color:#e5ca87;letter-spacing:.3px}
+.player-progress-card small{font:13px 'Crimson Text',serif;color:#bdb19d;line-height:1.35}
+.player-progress-buy{background:linear-gradient(135deg,#6b1b18,#351013);border:1px solid rgba(212,175,55,.48);border-radius:7px;color:#f2db9e;font:700 11px Cinzel,serif;min-height:34px;cursor:pointer;transition:background .2s,transform .15s}
+.player-progress-buy:hover:not(:disabled){background:linear-gradient(135deg,#a02d24,#571c1b);transform:translateY(-1px)}
+.player-progress-buy:disabled{opacity:.45;cursor:not-allowed}
+.player-progress-tip{margin:12px 0 20px;font:12px 'Crimson Text',serif;color:#a49679;line-height:1.55}
+#hp-numeric{font:10px Cinzel,serif;color:#81e9a2;line-height:1.15;margin-top:2px}
+#armor-track{height:7px;width:92px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;margin-top:5px}
+#armor-bar{width:0;height:100%;background:linear-gradient(90deg,#4a8ac7,#a5d8ef);transition:width .16s}
+#armor-value{font:10px Cinzel,serif;color:#bbdffe;margin-top:2px}
+@media (max-height:640px){.player-progress-card{padding:8px}.player-progress-section{padding-top:9px}}
