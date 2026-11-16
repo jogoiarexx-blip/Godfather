@@ -117,8 +117,9 @@ function garageSelect(id){
   const pt=findFreePoint(GARAGE_PROGRESS.point.x,GARAGE_PROGRESS.point.y,24,120);
   CAR.x=pt.x;CAR.y=pt.y;CAR.angle=0;CAR.speed=0;CAR.useTarget=false;
   garageApply(true);
-  // A destroyed stored vehicle stays unusable until it is serviced.
-  // Switching models cannot grant an automatic free repair.
+  CAR.recoveryTimer=CAR.hp<=0?8000:0;
+  // A destroyed stored vehicle stays unusable until the paid repair or rescue.
+  // Switching models cannot grant an immediate free repair.
   showMsg('🚗 Veículo pronto: '+m.name+'.','s');
   garageRender();garagePersist();
   return true;
@@ -149,7 +150,7 @@ function garageRepair(){
   if(!garageTradeAllowed()||CAR.hp>=CAR.maxHp)return false;
   const price=garageRepairPrice();
   if(!Number.isFinite(GS.money)||GS.money<price)return false;
-  GS.money-=price;CAR.hp=CAR.maxHp;garageCapture();
+  GS.money-=price;CAR.hp=CAR.maxHp;CAR.recoveryTimer=0;garageCapture();
   showMsg('🔧 Veículo reparado por $'+price.toLocaleString('pt-BR')+'.','s');
   garageRender();garagePersist();
   return true;
