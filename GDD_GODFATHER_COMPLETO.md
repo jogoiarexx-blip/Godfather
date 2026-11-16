@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.6 • **Data:** 16/11/2026  
+**Versão do documento:** 1.7 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -411,11 +411,25 @@ Além das 24 etapas da campanha, existem **9 contratos extras (3 por cidade)**, 
 | Underboss | 4.000 | 2 |
 | Don | 8.000 | 3 |
 
-**[ATUAL]** Seis linhas de upgrades (três níveis cada): vida dos guarda-costas, dano/cadência dos guarda-costas, quantidade de guarda-costas, vida dos guardas de negócios, dano dos guardas e alcance de vigilância.
+**[ATUAL — v8.14]** Seis linhas de upgrades (três níveis cada): vida dos guarda-costas, dano/cadência dos guarda-costas, quantidade de guarda-costas, vida dos guardas de negócios, dano dos guardas e alcance de vigilância. **Guardas de negócios equipados patrulham de verdade a área territorial, em vez de permanecerem ao lado do estabelecimento.** O comportamento considera o domínio do distrito, obedece às colisões e reage a invasões.
 
 **[PLANEJADO]** Adicionar ordens simples: seguir, defender posição, recuar, proteger patrimônio. Guardas não devem bloquear passagem ou receber duplicações após save/load, upgrade ou troca de mapa.
 
 ---
+
+### 12.1 Patrulhamento dos negócios e defesa de território [ATUAL — v8.14]
+
+Cada negócio **comprado e com pelo menos um nível de upgrade da propriedade** possui de um a três guardas, mantidos pelo sistema existente `PROP_GUARDS`. Os guardas de casas seguras continuam sentinelas fixas; o novo patrulhamento é somente dos **negócios**.
+
+- **Distrito ainda disputado:** ronda por oito pontos ao redor do negócio, cobrindo seu entorno sem sair para outra região.
+- **Distrito conquistado pela família:** a rota amplia-se para oito pontos distribuídos pelo perímetro e pelos cruzamentos do distrito inteiro. Cada guarda inicia em setor diferente, e guardas alternados patrulham em sentidos opostos, reduzindo a concentração.
+- **Mudança de domínio:** rotas são recalculadas automaticamente ao conquistar ou perder controle do distrito, com busca por pontos livres, limite territorial, desvio em colisões e salto de ponto após obstáculo persistente.
+- **Defesa e investigação:** invasores de propriedades são priorizados; rivais e inimigos dentro da área vigiada atraem os guardas. O guarda abandona temporariamente a ronda para se aproximar e disparar **apenas com linha de visão** e dentro do alcance das melhorias adquiridas. Depois investiga a última posição e retoma a patrulha.
+- **Polícia:** guardas não iniciam combate contra patrulhas policiais quando o jogador está com zero estrelas ou dentro de zona segura.
+- **Vida, morte e reposição:** ao morrer, o guarda retorna após 20 segundos, como anteriormente, recomeçando a rota. O minimapa mostra pequenos pontos **verdes** em ronda e **âmbar** durante a defesa; a aba Guardas explica a função.
+- **Desempenho:** as rotas são calculadas na criação ou troca de domínio e guardadas no próprio NPC; não há busca pesada por novos pontos a cada quadro. As colisões usam `moveTowardWorld` já existente.
+
+**Limites:** o patrulhamento não altera a quantidade de guardas e não cria um sistema novo de contratar tropas; rotas ainda exigem playtests de colisão/FPS em navegador real, especialmente em ruas com prédios apertados.
 
 ## 13. Polícia, calor e perseguição
 
@@ -542,7 +556,7 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 23**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 24**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
 ### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
@@ -595,6 +609,12 @@ Cada cidade mantém IDs próprios de contratos concluídos. Quando ativo, o obje
 O formato v23 mantém `gf_save_v7` e a leitura de saves v7–v22. O campo `garage` contém `selected` e `vehicles`, com `owned`, `engine`, `handling`, `armor` (0–3) e `condition` (0–1) por modelo. `car` também grava `recoveryTimer` após destruição. O esquema recusa IDs inexistentes, carro ativo não comprado, níveis acima do máximo ou conservação fora do intervalo. Saves anteriores recebem sedã inicial e ausência de upgrades.
 
 O progresso da garagem é restaurado **antes** da vida, posição e velocidade do carro, para recalcular os limites mecânicos corretos; upgrades de blindagem mantêm a porcentagem de vida em vez de repará-lo automaticamente. Trocar de modelo nunca gera reparo grátis. Continuar a partida após carro destruído preserva o tempo restante do socorro.
+
+### 19.7 Extensão v24 — guardas dos negócios e patrulha [ATUAL]
+
+O save v24 mantém a chave `gf_save_v7` e suporte a versões v7–v23. Adiciona `territoryGuards` com até 36 registros, identificados por `propId` e `slot`, com posição `x/y`, vida `hp`, morto `dead`, contador `respawnTimer`, índice `patrolIndex`, espera `patrolWait` e `alertTime`. IDs repetidos, coordenadas fora do mapa, valores impossíveis e status de morte incompatíveis são recusados na validação.
+
+Na restauração, o mapa, as propriedades, os upgrades e os guardas são reconstruídos primeiro. Somente então o sistema restaura a posição e os estados que correspondem aos guardas realmente existentes em propriedades compradas e aprimoradas. A rotina verifica limites do distrito e posiciona o guarda em ponto sem colisão. Para saves antigos, guardas recomeçam em seus postos com as novas rotas, **sem perder propriedades ou upgrades**.
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
@@ -683,12 +703,12 @@ O progresso da garagem é restaurado **antes** da vida, posição e velocidade d
 4. [PARCIAL] Chefes usam orçamento limitado de dano total por rajada e limites para reforços nas três fases; há intervalo de recuperação após especiais. Balanceamento definitivo para HP 100–250 e armas aprimoradas depende de playtests.
 5. [ATUAL] Padrões especiais exclusivos e telegráficos: Barzini — anel radial; Tattaglia — rajada frontal em leque; Stracci — fogo cruzado. Novos sinais com 850/1020/1180 ms de antecipação por chefe.
 
-### Fase 4 — MUNDO E MISSÕES [EM ANDAMENTO v8.13]
+### Fase 4 — MUNDO E MISSÕES [EM ANDAMENTO v8.14]
 
 1. [PENDENTE] Variar interiores sem destruir rotas já funcionais.
 2. [ATUAL — v8.12] Acrescentados nove contratos secundários com objetivos funcionais e escrita/localizações/recompensas específicas de cada cidade; as 24 etapas principais continuam intactas.
 3. [PARCIAL — v8.13] Garagem funcional com quatro veículos, direção WASD/clique, melhorias e reparos; trânsito mais inteligente e eventos específicos de bairro permanecem pendentes.
-4. [PARCIAL] Contratos novos aparecem agrupados na aba Missões, sem criar outra aba no menu; HUD/GPS existentes mostram o contrato ativo.
+4. [ATUAL/PARCIAL — v8.14] Contratos continuam na aba Missões. Guardas de negócios agora patrulham seus bairros e distritos conquistados; HUD/GPS e minimapa mostram os guardas em ronda. Testes completos de navegador pendentes.
 5. [PENDENTE] Incorporar árvore de habilidades complementar e playtests visuais.
 
 ### Fase 5 — POLIMENTO E LANÇAMENTO
@@ -743,4 +763,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** validar a garagem da v8.13 em navegador (4 modelos, colisão, teclas WASD, clique, reparos, dinheiro insuficiente, polícia, save v22→v23 e troca de cidade). Prosseguir com IA do tráfego, variantes de interiores e novos eventos do mundo sem prejudicar o desempenho. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
+**Próxima implementação recomendada:** testar as patrulhas de negócios da v8.14 no navegador (distrito rival/da família, um a três guardas, invasão, colisões, carregamento no meio de uma ronda e 20s de reposição) e preservar os playtests pendentes da garagem e dos contratos. Depois continuar a Fase 4 com IA do tráfego, interiores e eventos urbanos. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
