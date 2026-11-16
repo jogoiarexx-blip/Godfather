@@ -1,4 +1,55 @@
-# CHECKPOINT ATUAL — GODFATHER v8.9.0
+# CHECKPOINT ATUAL — GODFATHER v8.10.0
+
+**Atualizado em:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md), revisão 1.3  
+**Status:** Fase 3 (combate/IA) em andamento. Alterações funcionais publicadas; testes de lógica passaram; playtest visual completo no navegador ainda não executado.
+
+## Diagnóstico anterior
+- Inimigos de rua perseguiam o jogador com padrões de aproximação repetitivos; não guardavam memória funcional de visão ao perder linha de tiro.
+- Inimigos em interiores não aproveitavam diferenças táticas reais entre arquétipos; dano não utilizava multiplicadores por classe.
+- Atiradores não tinham tempo de mira para o jogador reagir; brutamontes não apresentavam estilo de disparo próprio.
+- Três chefes utilizavam o mesmo ataque especial radial instantâneo, variando apenas número/dano/velocidade; sem aviso de evasão.
+- Saves não guardavam os estados novos de percepção e preparo de ataque.
+
+## Implementado nesta etapa
+- **Módulo de IA `js/combat-tactics.js`:** percepções com teste de linha de visão, memória temporizada da última posição vista, estado de busca, movimentação lateral e flancos.
+- **Capanga:** aproximação até distância de combate e movimentação lateral.
+- **Agressor:** aproximação mais rápida com entrada em flanco.
+- **Brutamontes:** disparos duplos com dano distribuído, evitando multiplicação excessiva de dano.
+- **Atirador:** mantém distância, sinaliza a mira por 750 ms, fixa a posição de disparo antes de atirar e pode perder o alvo ao romper linha de visão.
+- **Interiores:** usam mesma lógica de IA, com navegação própria dos cômodos, classe alterando dano e spread; animações de tiro decaem corretamente.
+- **Reação a danos:** stagger curto para headshots, golpes corpo a corpo e danos fortes em certos arquétipos (brutamontes resistem mais).
+- **Chefes:** aviso visual e ataques especiais próprios: Barzini (anel radial, aviso 850 ms), Tattaglia (leque direcionado, aviso 1020 ms) e Stracci (fogo cruzado, aviso 1180 ms).
+- Durante o aviso, o chefe para de realizar tiros comuns, dando tempo para esquiva. O ataque especial é calculado pela simulação, então a pausa não adianta o contador.
+- **Saves v20:** `combatEnemySerialize` armazena memória, última posição, intenção de movimento e mira, e `bossWarning` com contagem regressiva/ângulo/fase. Saves v7–v19 são compatíveis e recebem padrões iniciais para os novos campos.
+- **Compatibilidade:** coordenadas de memória de versões antigas são escaladas apenas uma vez. Avisos inválidos de chefe são descartados; formatos incompatíveis são rejeitados.
+- Roadmap dentro do jogo e versão exibida no menu principal atualizados para 8.10.
+
+## Arquivos e commits
+1. `js/combat-tactics.js` — novo motor tático e padrões de ataque: `7a85e230a01c6eb5426f43e62d50a4952b467c6d`.
+2. `index.html` — integração combate, interiores, chefes, save v20: `f0b234368c07e65648e9da41ee44e89d05711a9d`.
+3. `js/combat-tactics.js` — corrigir duração da animação de tiro: `46b4922b8e953eba57d18b7d6cf91af9b092749a`.
+4. `index.html` — migração de memória legada e tiros durante aviso: `8681d4d6320ac284ea74d848ad2552d75eee7c68`.
+5. `index.html` — menu e roadmap atualizados: `95b4c30ea8c4ddbdd5501cc197e661adb9c0533d`.
+6. `GDD_GODFATHER_COMPLETO.md` — revisão 1.3: `9a49dda41a7acbb529a81cba8ac04fb83435ee12`.
+
+## Verificações realizadas
+- **Sintaxe:** compilação do módulo e do script principal combinado via JavaScript — passou.
+- **Integrações:** IA na rua/interior; reação a tiros; efeito de mira; avisos de chefe; carregamento e gravação v20; mapa de versões anteriores — passou.
+- **30 testes em ambiente simulado:** perseguição, cobertura, abandono de busca, tiros duplos, mira fixa de atirador, reação a dano, batalha especial distinta em cada cidade, contagem de avisos e sanitização — passaram.
+- **6 testes adicionais de saves:** formato v17, v19, v20 e rejeições de dados inválidos — passaram.
+- **NÃO testado:** jogabilidade completa no navegador, renderização em Canvas e desempenho/FPS em equipamentos reais. Não afirmar que esses cenários foram verificados.
+
+## Próximas ações — Fase 3 (continuação)
+1. Playtest de rua e interior nas três cidades, especialmente caminho até o jogador e cobertura sob fogo.
+2. Conferir timing das três lutas finais, cancelamento de avisos quando chefe muda de fase ou é derrotado e restauração do save durante ataque especial.
+3. Ajustar economia/tempo de combate dos chefes para HP 100–250 e armas melhoradas, mantendo desafios justos.
+4. Evoluir guarda-costas, polícia e patrulhas sem travar navegação nem elevar drasticamente CPU.
+5. Avaliar materiais e sprites dos inimigos e boss para distinguir visualmente classes sem sobrecarregar GitHub Pages.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.9.0
 
 **Atualizado em:** 16/11/2026  
 **GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.2  
