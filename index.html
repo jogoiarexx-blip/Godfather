@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.12.0</title>
+<title>Godfather Web Edition v8.13.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/player-progression.css">
 <link rel="stylesheet" href="css/weapon-shop.css">
 <link rel="stylesheet" href="css/city-contracts.css">
+<link rel="stylesheet" href="css/garage-system.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#d4af37;--gold-d:#a07820;--blood:#8b0000;--blood-b:#cc0000;--text:#e8d5a3;--dim:#8a7450}
@@ -292,6 +293,7 @@ body.menu-active #fps-counter{display:none!important}
 </div>
 
 <div id="mbar"><span id="mt"></span>&nbsp;<span id="md"></span></div>
+<div id="garage-drive-hud" aria-live="off"></div>
 <div id="kfeed"></div>
 <div id="msgs"></div>
 
@@ -373,6 +375,7 @@ body.menu-active #fps-counter{display:none!important}
     <div class="sb-tab" id="sbt-upg" title="Negócios (U)" onclick="sbOpen('upg')">🏛</div>
     <div class="sb-tab" id="sbt-guard" title="Guardas" onclick="sbOpen('guard')">🛡</div>
     <div class="sb-tab" id="sbt-house" title="Imóveis (E)" onclick="sbOpen('house')">🏠</div>
+    <div class="sb-tab" id="sbt-garage" title="Garagem" onclick="sbOpen('garage')">🚗</div>
     <div class="sb-tab" id="sbt-kb" title="Teclas" onclick="sbOpen('kb')">⌨️</div>
     <div class="sb-tab" id="sbt-rmap" title="Roadmap" onclick="sbOpen('rmap')">📋</div>
     <div style="flex:1"></div>
@@ -408,6 +411,11 @@ body.menu-active #fps-counter{display:none!important}
       <p style="color:var(--dim);font-size:11px;margin-bottom:12px">Pressione E perto de uma casa para comprar.</p>
       <div id="house-list"></div>
     </div>
+    <!-- GARAGEM -->
+    <div class="sb-pane" id="sbp-garage">
+      <h2>🚗 GARAGEM DA FAMÍLIA</h2>
+      <div id="garage-content"></div>
+    </div>
     <!-- TECLAS -->
     <div class="sb-pane" id="sbp-kb">
       <h2>⌨️ TECLAS</h2>
@@ -416,7 +424,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.12</h2>
+      <h2>🗺 ROADMAP v8.13</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -448,6 +456,7 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.10 — IA tática</b> — memória de visão, flanco, atirador com mira e padrões de chefes</div>
         <div class="rmap-item done">✅ <b>v8.11 — Guarda-costas e polícia</b> — proteção, patrulhas e chefes equilibrados</div>
         <div class="rmap-item done">✅ <b>v8.12 — Contratos exclusivos</b> — 9 missões extras, GPS, entregas e operações policiais</div>
+        <div class="rmap-item done">✅ <b>v8.13 — Garagem e direção</b> — 4 veículos, upgrades, manutenção e WASD</div>
         <div class="rmap-item pend">🔜 Próximas etapas — Balanceamento, guardas, veículos adicionais e garagem</div>
       </div>
     </div>
@@ -459,7 +468,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.12.0 · CONTRATOS DE CIDADE</div>
+      <div class="ssub">WEB EDITION — v8.13.0 · GARAGEM E VEÍCULOS</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -588,6 +597,7 @@ body.menu-active #fps-counter{display:none!important}
 <script src="js/combat-tactics.js"></script>
 <script src="js/security-tactics.js"></script>
 <script src="js/city-contracts.js"></script>
+<script src="js/garage-system.js"></script>
 <script>
 'use strict';
 
@@ -3315,7 +3325,21 @@ window.addEventListener('keydown', e => {
   if(e.repeat)return;
   if(INTERIOR.active&&e.code===KB.extort){tryInteriorInteract();return;}
   if(e.code===KB.extort){tryExtort();return;}
-  if(e.code===KB.car){if(INTERIOR.active){showMsg('🚗 Não dá para usar o carro dentro do prédio.','i');return;}e.preventDefault();const dc=Math.hypot(P.x-CAR.x,P.y-CAR.y);if(!GS.inCar&&dc<80){GS.inCar=true;P.x=CAR.x;P.y=CAR.y;CAR.useTarget=false;showMsg('🚗 Entrou no carro.','i');}else if(GS.inCar){GS.inCar=false;const fp=findFreePoint(CAR.x+60,CAR.y,13,140);P.x=fp.x;P.y=fp.y;showMsg('🚶 Saiu do carro.','i');}else showMsg('🚗 Carro longe demais.','i');return;}
+  if(e.code===KB.car){
+    if(INTERIOR.active){showMsg('🚗 Não dá para usar o carro dentro do prédio.','i');return;}
+    e.preventDefault();
+    const dc=Math.hypot(P.x-CAR.x,P.y-CAR.y);
+    if(!GS.inCar&&dc<80){
+      if(CAR.hp<=0){showMsg('💥 Veículo avariado. Espere o socorro ou repare na garagem.','d');return;}
+      GS.inCar=true;P.x=CAR.x;P.y=CAR.y;CAR.useTarget=false;
+      showMsg('🚗 '+garageSelectedModel().name+' · WASD para dirigir ou clique no mapa.','i');
+    }else if(GS.inCar){
+      GS.inCar=false;CAR.useTarget=false;CAR.speed*=.4;
+      const fp=findFreePoint(CAR.x+60,CAR.y,13,140);P.x=fp.x;P.y=fp.y;
+      showMsg('🚶 Saiu do carro.','i');
+    }else showMsg('🚗 Carro longe demais.','i');
+    return;
+  }
   if(e.code===KB.guard){GS.rank.guards===0&&guBgCountBonus()===0?showMsg('⭐ Precisa ser Caporegime.','d'):(syncGuards(),showMsg('👤 '+(GS.rank.guards+guBgCountBonus())+' guarda(s).','s'));return;}
   if(e.code===KB.missions){sbOpen('mis');return;}
   if(e.code==='KeyP'){sbOpen('char');return;}
@@ -3403,6 +3427,7 @@ function processWASD(dt) {
 // ══════════════════════════════════════════════════════════════════════
 function tryExtort() {
   if (intimActive||BUILDING_LOAD.active) return;
+  if(garageTryInteract())return;
   // Contract pickup/delivery takes precedence only at its marked location.
   if(cityContractsTryInteract())return;
   // Dealer is close to another property in some cities; shop takes precedence.
@@ -3440,6 +3465,7 @@ const SB_RENDERS = {
   upg:   ()=>upgPanelRender(),
   guard: ()=>guardPanelRender(),
   house: ()=>housePanelRender(),
+  garage:()=>garageRender(),
   kb:    ()=>kbRender(),
   rmap:  ()=>{},
 };
