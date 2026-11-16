@@ -92,7 +92,7 @@ function garageSchemaValid(data){
   return data.vehicles.sedan.owned===true&&data.vehicles[data.selected].owned===true;
 }
 function garageRestore(saved){
-  if(!garageSchemaValid(saved)){garageReset();return false;}
+  if(!garageSchemaValid(saved)){garageReset();garageApply(true);return false;}
   GARAGE_PROGRESS.selected=saved.selected;
   GARAGE_PROGRESS.vehicles=Object.fromEntries(GARAGE_VEHICLES.map(v=>
     [v.id,{...saved.vehicles[v.id]}]));
@@ -117,7 +117,8 @@ function garageSelect(id){
   const pt=findFreePoint(GARAGE_PROGRESS.point.x,GARAGE_PROGRESS.point.y,24,120);
   CAR.x=pt.x;CAR.y=pt.y;CAR.angle=0;CAR.speed=0;CAR.useTarget=false;
   garageApply(true);
-  if(CAR.hp<=0){CAR.hp=Math.round(CAR.maxHp*.25);garageCapture();}
+  // A destroyed stored vehicle stays unusable until it is serviced.
+  // Switching models cannot grant an automatic free repair.
   showMsg('🚗 Veículo pronto: '+m.name+'.','s');
   garageRender();garagePersist();
   return true;
