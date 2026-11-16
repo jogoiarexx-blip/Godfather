@@ -1,0 +1,14 @@
+/* v8.13 garage — compact cards in existing sidebar, no extra fullscreen UI. */
+#garage-content{display:flex;flex-direction:column;gap:10px;padding-bottom:20px}
+.garage-note{font:12px/1.45 "Crimson Text",serif;color:#c6b799;margin:0 0 6px}
+.garage-summary{padding:10px;border:1px solid rgba(212,175,55,.38);border-radius:8px;background:rgba(80,54,20,.21);font:700 10px/1.6 Cinzel,serif;color:#e6cd8d}
+.garage-car{padding:12px 10px;display:flex;flex-direction:column;gap:7px;border:1px solid rgba(212,175,55,.23);border-radius:9px;background:linear-gradient(110deg,rgba(68,47,22,.18),rgba(12,10,10,.85))}
+.garage-car.is-selected{border-color:rgba(98,201,130,.62);box-shadow:inset 3px 0 rgba(98,201,130,.6)}
+.garage-car h3{font:700 12px Cinzel,serif;color:#e8d08d;letter-spacing:.2px}
+.garage-car p{font:12px/1.45 "Crimson Text",Georgia,serif;color:#b8a98a}
+.garage-car small{color:#c0cbb5;font:10px/1.5 Cinzel,serif}
+.garage-current{font:700 10px Cinzel,serif;letter-spacing:.8px;color:#77cf94}
+.garage-action{border:1px solid rgba(212,175,55,.47);border-radius:7px;background:linear-gradient(130deg,#6d3325,#3f211b);color:#f5dfb9;min-height:35px;font:700 10px/1.3 Cinzel,serif;padding:8px;cursor:pointer}
+.garage-action:hover:not(:disabled){filter:brightness(1.18)}
+.garage-action:disabled{cursor:not-allowed;opacity:.44}
+#garage-drive-hud{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font:11px Cinzel,serif;color:#f1e2bf;background:rgba(7,6,6,.81);border:1px solid rgba(212,175,55,.32);border-radius:9px;padding:7px 12px;z-index:105;pointer-events:none;white-space:nowrap;display:none;max-width:90vw;text-overflow:ellipsis;overflow:hidden}
