@@ -83,6 +83,8 @@ function combatUpdateEnemy(e,dt,interior=false){
     tactic=COMBAT_TACTICS[e.type]||COMBAT_TACTICS.grunt;
   combatInitEnemy(e);
   const step=Math.min(Math.max(dt,0),50);
+  // Interior sprite shooting frames must decay even when staggered.
+  e.fireFx=Math.max(0,(e.fireFx||0)-step);
   if(e.stun>0){e.stun=Math.max(0,e.stun-step);e.aimTimer=0;return;}
   const dx=P.x-e.x,dy=P.y-e.y,dist=Math.hypot(dx,dy);
   const blocked=interior?
