@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.5 • **Data:** 16/11/2026  
+**Versão do documento:** 1.6 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -434,11 +434,26 @@ Além das 24 etapas da campanha, existem **9 contratos extras (3 por cidade)**, 
 
 ## 14. Veículos, pedestres e eventos
 
-**[ATUAL]** Carro do protagonista possui velocidade, direção, dano, colisão, entrada/saída e interação com perseguidores. Tráfego e civis percorrem ruas; civis reagem a ameaças; eventos temporários incluem dinheiro, munição e emboscadas. O relógio de mundo usa **12 minutos reais para 24h no jogo**, com transição noite/dia.
+**[ATUAL — v8.13]** O protagonista possui garagem, quatro modelos de veículos com características próprias, compra, seleção, upgrades permanentes de motor/direção/blindagem, reparo pago e direção por WASD ou clique. O sistema reutiliza o objeto CAR do motor para preservar colisões, policiais e missões. Tráfego e civis percorrem ruas; civis reagem a ameaças; eventos temporários incluem dinheiro, munição e emboscadas. O relógio de mundo usa **12 minutos reais para 24h no jogo**, com transição noite/dia.
 
-**[PLANEJADO]** Garagem, classes de veículos, reparo e melhorias de direção, colisão, iluminação e sensação de movimento; comportamentos de tráfego mais naturais e eventos por bairro.
+**[PLANEJADO]** Evoluir o estacionamento para vários veículos na mesma cena, trânsito inteligente e semáforos, avarias visuais, iluminação e eventos por bairro. Na v8.13 apenas o veículo selecionado está presente na rua, para preservar desempenho.
 
 ---
+
+### 14.1 Garagem e classes de veículos [ATUAL — v8.13]
+
+| Modelo | Custo | Vida base | Velocidade base | Aceleração | Perfil |
+|---|---:|---:|---:|---:|---|
+| Sedã Corleone | Inicial | 100 HP | 10,0 | 0,45 | Equilibrado |
+| Falcão GT | $5.500 | 82 HP | 13,0 | 0,65 | Esportivo |
+| Fúria V8 | $10.500 | 135 HP | 11,4 | 0,77 | Aceleração e resistência |
+| Fortaleza Blindada | $18.500 | 190 HP | 8,8 | 0,35 | Proteção máxima |
+
+Todos os carros permitem **3 níveis** nas trilhas **Motor** (+10% da velocidade máxima e +13% da aceleração por nível), **Direção** (+14% da agilidade de curva por nível) e **Blindagem** (+25% da vida máxima e redução de 10% no dano recebido por nível, respeitando limite mínimo). O custo de cada nível usa uma faixa de preços multiplicada pela categoria do modelo. Esses atributos influenciam a física e os danos, não apenas o texto da interface.
+
+A garagem está no ponto inicial de estacionamento do carro em cada cidade e tem indicação no mapa. Pressione **E perto dela, a pé, com 0 estrelas**, ou use a aba Garagem para consultar o catálogo; as operações exigem proximidade real. Ao escolher outro modelo, o carro ativo é reposicionado na garagem; veículos não selecionados preservam individualmente estado de conservação e níveis de melhoria. Não há diversos carros próprios ativos simultaneamente no mapa.
+
+O **WASD** controla aceleração, ré e direção; o clique no mapa continua selecionando destinos. Quando o jogador usa o teclado, a rota por clique é cancelada. Carro destruído ejeta o jogador, aguarda 8 segundos **de simulação**, e volta com 25% da vida; o reparo integral precisa ser pago na garagem. As artes de todos os carros são feitas por Canvas com silhuetas/cores e detalhes distintos, sem downloads extras.
 
 ## 15. Interiores, invasões e intimidação
 
@@ -527,7 +542,7 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 22**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 23**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
 ### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
@@ -574,6 +589,12 @@ O save v22 mantém a chave `gf_save_v7` e suporte a versões v7–v21. Adiciona:
 ```
 
 Cada cidade mantém IDs próprios de contratos concluídos. Quando ativo, o objeto contém `id`, `city`, `stage`, `kills` e `wantedStarted`. Inimigos específicos de caçada preservam `cityContractId` no array de NPCs do save, para impedir perda de progresso após continuar a partida. Versões antigas restauram zero contratos. A validação impede IDs inexistentes, estados incompatíveis, contagem acima do alvo, conclusão duplicada e contratos ativos em mapa diferente do save.
+
+### 19.6 Extensão v23 — garagem e estado de veículos [ATUAL]
+
+O formato v23 mantém `gf_save_v7` e a leitura de saves v7–v22. O campo `garage` contém `selected` e `vehicles`, com `owned`, `engine`, `handling`, `armor` (0–3) e `condition` (0–1) por modelo. `car` também grava `recoveryTimer` após destruição. O esquema recusa IDs inexistentes, carro ativo não comprado, níveis acima do máximo ou conservação fora do intervalo. Saves anteriores recebem sedã inicial e ausência de upgrades.
+
+O progresso da garagem é restaurado **antes** da vida, posição e velocidade do carro, para recalcular os limites mecânicos corretos; upgrades de blindagem mantêm a porcentagem de vida em vez de repará-lo automaticamente. Trocar de modelo nunca gera reparo grátis. Continuar a partida após carro destruído preserva o tempo restante do socorro.
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
@@ -662,11 +683,11 @@ Cada cidade mantém IDs próprios de contratos concluídos. Quando ativo, o obje
 4. [PARCIAL] Chefes usam orçamento limitado de dano total por rajada e limites para reforços nas três fases; há intervalo de recuperação após especiais. Balanceamento definitivo para HP 100–250 e armas aprimoradas depende de playtests.
 5. [ATUAL] Padrões especiais exclusivos e telegráficos: Barzini — anel radial; Tattaglia — rajada frontal em leque; Stracci — fogo cruzado. Novos sinais com 850/1020/1180 ms de antecipação por chefe.
 
-### Fase 4 — MUNDO E MISSÕES [EM ANDAMENTO v8.12]
+### Fase 4 — MUNDO E MISSÕES [EM ANDAMENTO v8.13]
 
 1. [PENDENTE] Variar interiores sem destruir rotas já funcionais.
 2. [ATUAL — v8.12] Acrescentados nove contratos secundários com objetivos funcionais e escrita/localizações/recompensas específicas de cada cidade; as 24 etapas principais continuam intactas.
-3. [PENDENTE] Melhorar tráfego, eventos, vida urbana e diferenciação de mapas.
+3. [PARCIAL — v8.13] Garagem funcional com quatro veículos, direção WASD/clique, melhorias e reparos; trânsito mais inteligente e eventos específicos de bairro permanecem pendentes.
 4. [PARCIAL] Contratos novos aparecem agrupados na aba Missões, sem criar outra aba no menu; HUD/GPS existentes mostram o contrato ativo.
 5. [PENDENTE] Incorporar árvore de habilidades complementar e playtests visuais.
 
@@ -722,4 +743,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** concluir playtests v8.12 no navegador (interações E, marcadores de GPS, avanço e restauração de contratos, chefe rival), executar os testes automatizados do repositório e continuar Fase 4 com melhorias concretas de veículos, tráfego e interiores. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md)..
+**Próxima implementação recomendada:** validar a garagem da v8.13 em navegador (4 modelos, colisão, teclas WASD, clique, reparos, dinheiro insuficiente, polícia, save v22→v23 e troca de cidade). Prosseguir com IA do tráfego, variantes de interiores e novos eventos do mundo sem prejudicar o desempenho. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
