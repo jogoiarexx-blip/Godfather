@@ -1,4 +1,50 @@
-# CHECKPOINT ATUAL — GODFATHER v8.13.0
+# CHECKPOINT ATUAL — GODFATHER v8.14.0
+
+**Data:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.7  
+**Status:** Patrulhamento dos guardas de negócios implementado e publicado na `main`; playtests reais de navegador pendentes.
+
+## Solicitação atendida — guardas dos negócios patrulham território
+Antes da v8.14, guardas de negócio ficavam quase estáticos perto de `homeX/homeY` e só disparavam quando uma ameaça entrava no raio de detecção. Agora:
+- Guardas de negócios comprados e aprimorados passam a patrulhar oito pontos de sua região, com ciclos de caminhada, pausa breve e direção.
+- Quando o distrito está contestado, patrulham as ruas próximas ao negócio. **Quando os imóveis do distrito ficam sob domínio da família, a ronda se expande para o território inteiro.**
+- Guardas múltiplos iniciam em setores distintos e alternam direção da ronda; não formam uma fila no mesmo ponto.
+- Ao detectar rivais, inimigos ou invasores, **interrompem a patrulha, vão defender a área e só atiram com linha de visão livre**. Invasores que estão atacando a propriedade têm prioridade. Após o combate, investigam brevemente a última posição vista e retomam a rota.
+- Guardas não iniciam conflito com policiais quando o personagem não tem estrelas ou está na zona segura.
+- Pontos de rota são procurados em áreas transitáveis e o movimento usa colisões reais de `moveTowardWorld`; guardas pulam para o próximo ponto ao ficar presos. A rota é automaticamente renovada quando o domínio do distrito muda.
+- Guardas de casas seguras **continuam no posto**, como antes; não foram alterados.
+- O minimapa mostra guardas de negócios com pontos verdes em ronda e âmbar em defesa; a aba Guardas recebeu a explicação da nova função.
+- A morte e a reposição após 20 segundos continuam funcionando; novas patrulhas iniciam ao reaparecer.
+
+## Persistência — save v24
+- Mantida a mesma chave `gf_save_v7`, com leitura de saves v7–v23.
+- O novo campo `territoryGuards` preserva a posição, o HP, se está morto, o tempo de reposição e o ponto/espera atual da ronda. Suporte a até 36 guardas de negócios.
+- A carga de saves restaura o estado após reconstruir o mapa, propriedades e vigias, evitando aparecer guardas sem negócio.
+- O esquema recusa dados malformados, slots duplicados, posição fora do mapa, vida não finita e tempo de reposição impossível. Saves antigos iniciam novas rondas sem apagar economia e melhorias.
+
+## Arquivos e commits
+- `js/territory-patrol.js`: novo motor de guarda territorial, geração de rotas, IA defensiva e restauração — `e87bda633cae83f9523c055ee78c61e7a0f28315`.
+- `index.html`: v8.14, integração ao sistema de vigias e save v24 — `747857fbc2f0281613b5f4082ecaeab957fb5e55`.
+- `js/territory-patrol.js`: rota curta antes da conquista, rota por distrito após conquista, atualização quando muda posse — `a322f57bf82c1a04a4dd54ee192a06f98bc82328`.
+- `index.html`: pontos de sentinelas no minimapa e descrição no painel Guardas — `1e9d15b6fd229efa876997d9fad2842b5ee64d99`.
+- `tests/territory-patrol.test.cjs`: suíte de regressão Node sem pacotes externos — `984231a8bc3d2576cccb68b50c6a6a9cd0687ec1`.
+- `GDD_GODFATHER_COMPLETO.md`: revisão 1.7 — `b12c2bc9c41fd3211c8900141ddaac85fcd35ea1`.
+
+## Validação realizada
+- **31 verificações de lógica** em JavaScript isolado: rotas diferentes, deslocamento real, limite do território, seleção de raider, agressão policial condicionada às estrelas, tiros bloqueados, investigação, desbloqueio de obstáculos, registro de estados e restauro de guardas mortos — passaram.
+- **15 verificações de saves v24 e versões antigas** (v17, v19, v22, v23, v24, slots duplicados, posição inválida, patamar máximo de tempo/índice, HP morto) — passaram.
+- Sintaxe combinada dos módulos JS e do motor principal — passou.
+- Suite permanente escrita em `tests/territory-patrol.test.cjs`; **execução de Node no ambiente remoto e playtest visual completo não confirmados**. Ainda é necessário verificar colisões, ritmo de rota e desempenho em navegador.
+
+## Próxima fase
+1. Executar `node --test tests/*.test.cjs` em clone/CI.
+2. Fazer playtest em cada cidade com 1, 2 e 3 guardas por negócio, distritos conquistados/contestados, raides e saves no meio da ronda.
+3. Ajustar posições problemáticas na cidade e a velocidade de ronda baseada no teste visual.
+4. Prosseguir com IA do tráfego, interiores e missões de mundo da Fase 4.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.13.0
 
 **Atualizado em:** 16/11/2026  
 **GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.6  
