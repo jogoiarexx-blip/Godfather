@@ -3678,7 +3678,7 @@ function guardPanelRender() {
 
   // Add property guard section header
   const pgHeader = document.createElement('div');
-  pgHeader.innerHTML = '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:2px;color:rgba(68,170,136,.6);margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(68,170,136,.12)">🛡 GUARDAS DE NEGÓCIO & CASA</div>';
+  pgHeader.innerHTML = '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:2px;color:rgba(68,170,136,.6);margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(68,170,136,.12)">🛡 GUARDAS DE NEGÓCIO & CASA</div><p style="font-size:11px;color:#b9c9af;line-height:1.5;margin-bottom:9px">Guardas dos negócios patrulham a área próxima e, ao dominar o distrito, toda a região. Respondem a invasores e depois retomam a ronda. Os guardas das casas seguras continuam no posto.</p>';
   l.appendChild(pgHeader);
   l.appendChild(pgSec);
 
@@ -4347,6 +4347,12 @@ function drawMinimap(){
   c.strokeStyle='rgba(220,215,195,.16)';c.lineCap='round';
   for(const r of WORLD_ALL_ROADS){c.lineWidth=Math.max(1,r[4]*sx*.38);c.beginPath();c.moveTo(r[0]*sx,r[1]*sy);c.lineTo(r[2]*sx,r[3]*sy);c.stroke();}
   for(const p of PROPS){c.fillStyle=p.owned?'#49bd6b':'#d9ad42';c.beginPath();c.arc(p.x*sx,p.y*sy,4,0,Math.PI*2);c.fill();}
+  // Small live patrol indicators: green on rounds, amber when defending.
+  for(const guard of PROP_GUARDS){
+    if(guard.propId===null||guard.dead)continue;
+    c.fillStyle=guard.mode==='defend'?'#f0b54c':'#7ce5ad';
+    c.beginPath();c.arc(guard.x*sx,guard.y*sy,2.2,0,Math.PI*2);c.fill();
+  }
   c.fillStyle='#b26cff';c.beginPath();c.arc(DEALER.x*sx,DEALER.y*sy,3.5,0,Math.PI*2);c.fill();
   garageMinimap(c,sx,sy);
   for(const sh of SAFEHOUSES)if(sh.owned){c.fillStyle='#43d97a';c.fillRect(sh.x*sx-3,sh.y*sy-3,6,6);}
