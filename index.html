@@ -2,10 +2,11 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.8.0</title>
+<title>Godfather Web Edition v8.9.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/player-progression.css">
+<link rel="stylesheet" href="css/weapon-shop.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#d4af37;--gold-d:#a07820;--blood:#8b0000;--blood-b:#cc0000;--text:#e8d5a3;--dim:#8a7450}
@@ -518,6 +519,19 @@ body.menu-active #fps-counter{display:none!important}
   <div id="boss-meta"><span id="boss-hp">0 / 0 HP</span><span id="boss-dist">—</span></div>
 </div>
 
+<!-- ARMORY v8.9: inventory and upgrades, E near the arms dealer -->
+<div id="weapon-shop" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Oficina de armas">
+  <div id="weapon-shop-card">
+    <div id="weapon-shop-top">
+      <div><h2>🗡️ OFICINA DE ARMAS</h2><p>Compre armamentos, munição e melhorias permanentes</p></div>
+      <button type="button" id="weapon-shop-close" aria-label="Fechar oficina">✕</button>
+    </div>
+    <div id="weapon-shop-money">$0</div>
+    <div id="weapon-shop-tabs" role="tablist" aria-label="Categorias da oficina"></div>
+    <div id="weapon-shop-content"></div>
+    <div id="weapon-shop-foot">E perto do negociante abre a oficina · ESC fecha · as compras são salvas automaticamente.</div>
+  </div>
+</div>
 <div id="pause-menu">
   <div id="pause-card">
     <h2>⏸ PAUSADO</h2>
@@ -560,6 +574,7 @@ body.menu-active #fps-counter{display:none!important}
 </div>
 
 <script src="js/player-progression.js"></script>
+<script src="js/weapon-progression.js"></script>
 <script>
 'use strict';
 
@@ -800,21 +815,8 @@ function tickCombatState(dt){
 // Arms dealer location — overwritten by loadMap()
 const DEALER = { x:860, y:340, icon:'🗡️', name:'Negociante de Armas' };
 
-function buyWeapon(id) {
-  const costs = [0, 2500, 6000];
-  const ammoCosts = [0, 500, 800];
-  if (id===0) return;
-  if (!weaponOwned[id]) {
-    if (GS.money < costs[id]) { showMsg('❌ Precisa $'+costs[id].toLocaleString()+' para comprar.','d'); return; }
-    GS.money -= costs[id]; weaponOwned[id]=true; WEAPONS[id].ammo=WEAPONS[id].maxAmmo; WEAPONS[id].clip=WEAPONS[id].magSize;
-    showMsg('🔫 '+WEAPONS[id].name+' comprada!','s'); renderWeaponHUD();
-  } else {
-    if (WEAPONS[id].ammo >= WEAPONS[id].maxAmmo && WEAPONS[id].clip >= WEAPONS[id].magSize) { showMsg(WEAPONS[id].name+' já está com munição cheia.','i'); return; }
-    if (GS.money < ammoCosts[id]) { showMsg('❌ Precisa $'+ammoCosts[id]+' para munição.','d'); return; }
-    GS.money -= ammoCosts[id]; WEAPONS[id].ammo = WEAPONS[id].maxAmmo; WEAPONS[id].clip=WEAPONS[id].magSize;
-    showMsg('🔫 Munição reabastecida!','s'); renderWeaponHUD();
-  }
-}
+// Shop purchases are intentionally restricted to the active armory near the dealer.
+function buyWeapon(id){return weaponShopPurchaseWeapon(id);}
 
 function switchWeapon(id) {
   if (!weaponOwned[id]) { showMsg('🔫 Compre '+WEAPONS[id].name+' primeiro.','d'); return; }
@@ -833,7 +835,7 @@ function renderWeaponHUD() {
     d.style.opacity = weaponOwned[i]?'1':'0.35';
     const ammoTxt=weaponOwned[i] ? ((isReloading()&&reloadWeapon===i?'⟳ ':'')+ammoLabel(w)) : '💰';
     d.innerHTML = '<span class="wi">'+w.icon+'</span><span class="wn">'+(i+1)+' '+w.name+'</span><span class="wa">'+ammoTxt+'</span>';
-    d.onclick = () => weaponOwned[i] ? switchWeapon(i) : buyWeapon(i);
+    d.onclick = () => weaponOwned[i] ? switchWeapon(i) : showMsg('🗡️ Compre '+w.name+' na oficina do negociante (E).','i');
     c.appendChild(d);
   });
 }
@@ -3313,6 +3315,11 @@ window.addEventListener('blur',()=>{mDown=false;keysDown.clear();if(GAME_SETTING
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
 window.addEventListener('keydown', e => {
+  if(WEAPON_SHOP.open){
+    if(e.code==='Escape'){e.preventDefault();closeWeaponShop();}
+    else e.preventDefault();
+    return;
+  }
   if(mainMenuActive){keysDown.clear();return;}
   if(BUILDING_LOAD.active){e.preventDefault();keysDown.clear();return;}
   keysDown.add(e.code);
@@ -3415,17 +3422,10 @@ function processWASD(dt) {
 // ══════════════════════════════════════════════════════════════════════
 function tryExtort() {
   if (intimActive||BUILDING_LOAD.active) return;
+  // Dealer is close to another property in some cities; shop takes precedence.
+  if(weaponShopInRange()){openWeaponShop();return;}
   const pr=nearProp(P.x,P.y,100);
   if(!pr){
-    // Check if near arms dealer
-    if(Math.hypot(P.x-DEALER.x,P.y-DEALER.y)<100){
-      showMsg('🗡️ Selecione arma (1/2/3) e pressione E para comprar.','i');
-      // Auto-buy the next unavailable weapon
-      const next = WEAPONS.find((w,i)=>!weaponOwned[i]);
-      if(next) buyWeapon(next.id);
-      else showMsg('🔫 Todas armas compradas. Reabastecendo...','i'), buyWeapon(curWeapon);
-      return;
-    }
     // Check near safehouse spot
     const nearSH = nearSafehouseSpot(P.x,P.y,100);
     if(nearSH){
@@ -4503,7 +4503,7 @@ let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function isValidSaveData(d){
-  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18].includes(d.ver))return false;
+  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19].includes(d.ver))return false;
   if(!Number.isInteger(d.mapId)||d.mapId<0||d.mapId>=MAP_DEFS.length)return false;
   if(!Number.isFinite(d.money)||d.money<0||!Number.isFinite(d.respect)||d.respect<0)return false;
   if(!Number.isFinite(d.px)||!Number.isFinite(d.py))return false;
@@ -4512,18 +4512,19 @@ function isValidSaveData(d){
   if(!d.props.every(p=>p&&typeof p.owned==='boolean'&&Number.isInteger(p.ul)&&p.ul>=0&&p.ul<=3))return false;
   if(!d.dists.every(x=>x&&['player','rival','neutral'].includes(x.owner)))return false;
   if(!d.missions.every(x=>x&&['locked','available','active','completed'].includes(x.status)))return false;
-  if(d.ver===18){
+  if(d.ver>=18){
     if(!d.playerProgress||typeof d.playerProgress!=='object')return false;
     for(const [k,def] of Object.entries(PLAYER_LEVELS))if(!Number.isInteger(d.playerProgress[k])||d.playerProgress[k]<0||d.playerProgress[k]>=def.values.length)return false;
     if(!Number.isFinite(d.playerProgress.armorCurrent)||d.playerProgress.armorCurrent<0)return false;
     for(const [k,kit] of Object.entries(PLAYER_KITS))if(!Number.isInteger(d.playerProgress.medkits?.[k])||d.playerProgress.medkits[k]<0||d.playerProgress.medkits[k]>kit.limit)return false;
   }
+  if(d.ver>=19&&!weaponProgressSchemaValid(d.weaponProgress))return false;
   return true;
 }
 
 function saveGame() {
   const data = {
-    ver: 18,
+    ver: 19,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4533,6 +4534,7 @@ function saveGame() {
     px: INTERIOR.active&&INTERIOR.returnPos?INTERIOR.returnPos.x:P.x, py: INTERIOR.active&&INTERIOR.returnPos?INTERIOR.returnPos.y:P.y,
     php: P.hp, pangle:P.angle,
     playerProgress:snapshotPlayerProgress(),
+    weaponProgress:weaponProgressSnapshot(),
     heat:GS.heat, stars:GS.stars, wantedTimer:GS.wantedTimer, wantedClearing:GS.wantedClearing,
     inCar:INTERIOR.active?false:GS.inCar,
     car:{x:CAR.x,y:CAR.y,hp:CAR.hp,maxHp:CAR.maxHp,angle:CAR.angle,speed:CAR.speed},
@@ -4576,6 +4578,8 @@ function loadGame() {
     loadMap(data.mapId);
     // Migration: v7–v17 defaults to 100 HP. Restore cap before loading php.
     restorePlayerProgress(data.ver>=18?data.playerProgress:null);
+    // Weapons are reset to base stats on legacy saves, then upgraded on v19.
+    weaponProgressRestore(data.ver>=19?data.weaponProgress:null);
 
     // Restore GS
     GS.money = data.money;
@@ -4596,8 +4600,10 @@ function loadGame() {
     if(data.ver>=8&&Number.isFinite(data.pangle)) P.angle=data.pangle;
 
     // Restore weapons
-    if(data.weaponOwned) weaponOwned = [...data.weaponOwned];
-    if(data.curWeapon !== undefined) curWeapon = data.curWeapon;
+    if(Array.isArray(data.weaponOwned)&&data.weaponOwned.length===WEAPONS.length)
+      weaponOwned = data.weaponOwned.map((owned,i)=>i===0?true:Boolean(owned));
+    if(Number.isInteger(data.curWeapon)&&weaponOwned[data.curWeapon])curWeapon=data.curWeapon;
+    else curWeapon=0;
     (data.weapons||[]).forEach((sv,i)=>{
       const w=WEAPONS[i];if(!w)return;
       if(Number.isFinite(sv.ammo)||sv.ammo===-1)w.ammo=sv.ammo;
@@ -4725,6 +4731,10 @@ function updatePauseStats(){const el=document.getElementById('pause-stats');if(!
 function openPauseMenu(reason='PAUSADO'){if(mainMenuActive||!gameSessionStarted||BUILDING_LOAD.active||GS.gameOver||GS.won||intimActive)return;if(_sbActive){sbClose();}pauseMenuActive=true;GS.paused=true;mDown=false;keysDown.clear();const pm=document.getElementById('pause-menu');if(pm){pm.classList.add('on');pm.querySelector('h2').textContent='⏸ '+reason;}updatePauseStats();}
 function closePauseMenu(){if(!pauseMenuActive)return;pauseMenuActive=false;document.getElementById('pause-menu')?.classList.remove('on');if(!mainMenuActive&&!GS.gameOver&&!GS.won)GS.paused=false;lastT=performance.now();}
 function returnToMainMenu(saveFirst=true){if(saveFirst)saveGame();pauseMenuActive=false;document.getElementById('pause-menu')?.classList.remove('on');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));_sbActive=null;stopLoop();enterMainMenuState();const splash=document.getElementById('splash');if(splash){splash.style.display='flex';requestAnimationFrame(()=>splash.classList.remove('hide'));}updateMainMenuSaveUI();applySettings();}
+document.getElementById('weapon-shop-close')?.addEventListener('click',closeWeaponShop);
+document.getElementById('weapon-shop')?.addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closeWeaponShop();
+});
 document.getElementById('pause-resume-btn')?.addEventListener('click',closePauseMenu);
 document.getElementById('pause-save-btn')?.addEventListener('click',()=>{if(saveGame()){showSaveIndicator();updatePauseStats();showMsg('💾 Jogo salvo.','s');}});
 document.getElementById('pause-gps-btn')?.addEventListener('click',()=>{toggleMinimap();updatePauseStats();});
@@ -4811,6 +4821,7 @@ function resetCampaignProgress(){
   resetPlayerProgress();
   P.hp=P.maxHp;P.invincible=0;P.angle=0;P.wFrame=0;P.wTimer=0;P.sprShoot=0;P.moving=false;
   curWeapon=0;weaponOwned=[true,false,false];
+  weaponProgressReset();
   for(const w of WEAPONS){w.ammo=w.maxAmmo;w.clip=w.magSize;}
   for(const k of Object.keys(GU))GU[k]=0;
   for(const m of MIS)m.status='locked';
