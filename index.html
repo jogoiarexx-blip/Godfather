@@ -2309,20 +2309,47 @@ function drawInteriorScene(){
 // CAR
 // ══════════════════════════════════════════════════════════════════════
 const CAR = {
-  x:320, y:480, speed:0, angle:0, hp:100, maxHp:100, crashCd:0,
+  x:320, y:480, speed:0, angle:0, hp:100, maxHp:100, crashCd:0,recoveryTimer:0,
   targetX:320, targetY:480, useTarget:false,
   update(dt) {
-    const sc=dt/16;
-    if (this.useTarget) {
-      const dx=this.targetX-this.x, dy=this.targetY-this.y, dist=Math.hypot(dx,dy);
-      if (dist>30) {
-        const da=Math.atan2(dy,dx); let diff=da-this.angle;
-        while(diff>Math.PI)diff-=Math.PI*2; while(diff<-Math.PI)diff+=Math.PI*2;
-        this.angle += Math.sign(diff)*Math.min(Math.abs(diff),0.055*sc)*(Math.abs(this.speed)/10*0.6+0.4);
-        this.speed = Math.min(10, this.speed+0.45*sc);
-      } else { this.useTarget=false; this.speed*=0.85; }
-    } else { this.speed*=Math.pow(0.88,sc); }
-    this.speed = Math.max(-4, Math.min(10,this.speed));
+    const sc=Math.min(dt,34)/16,st=garageStats();
+    if(this.hp<=0){
+      this.recoveryTimer=Math.max(0,(this.recoveryTimer||0)-dt);
+      this.speed=0;this.useTarget=false;
+      if(this.recoveryTimer===0){
+        // Emergency service returns the vehicle with only 25% HP.
+        this.hp=Math.max(1,Math.round(this.maxHp*.25));
+        garageCapture();
+        showMsg('🚗 Socorro: veículo recuperado com 25% de vida.','i');
+      }
+      return;
+    }
+    // WASD controls steer directly. Manual input cancels a previous click route.
+    const up=GS.inCar&&keysDown.has(KB.up),down=GS.inCar&&keysDown.has(KB.down),
+      left=GS.inCar&&keysDown.has(KB.left),right=GS.inCar&&keysDown.has(KB.right);
+    if(up||down||left||right){
+      this.useTarget=false;
+      const throttle=(up?1:0)-(down?1:0);
+      this.speed+=throttle*st.accel*sc;
+      if(!throttle)this.speed*=Math.pow(.92,sc);
+      const steering=(right?1:0)-(left?1:0);
+      if(steering&&Math.abs(this.speed)>.16){
+        const motion=Math.max(.28,Math.min(1,Math.abs(this.speed)/3));
+        this.angle+=steering*st.turn*sc*motion*(this.speed<0?-1:1);
+      }
+    }else if(this.useTarget){
+      const dx=this.targetX-this.x,dy=this.targetY-this.y,dist=Math.hypot(dx,dy);
+      if(dist>32){
+        const desired=Math.atan2(dy,dx);
+        let diff=desired-this.angle;
+        while(diff>Math.PI)diff-=Math.PI*2;
+        while(diff<-Math.PI)diff+=Math.PI*2;
+        this.angle+=Math.sign(diff)*Math.min(Math.abs(diff),st.turn*sc)*
+          (Math.abs(this.speed)/Math.max(1,st.maxSpeed)*.6+.4);
+        this.speed=Math.min(st.maxSpeed,this.speed+st.accel*sc);
+      }else{this.useTarget=false;this.speed*=Math.pow(.85,sc);}
+    }else this.speed*=Math.pow(.88,sc);
+    this.speed=Math.max(-st.reverse,Math.min(st.maxSpeed,this.speed));
     this.crashCd=Math.max(0,(this.crashCd||0)-dt);
     const mx=Math.cos(this.angle)*this.speed*sc,my=Math.sin(this.angle)*this.speed*sc;
     const directBlocked=collidesWorld(this.x+mx,this.y+my,24);
@@ -2340,8 +2367,19 @@ const CAR = {
     if (GS.inCar) { P.x=this.x; P.y=this.y; }
   },
   takeDmg(v) {
-    this.hp-=v;
-    if (this.hp<=0) { this.hp=0; GS.inCar=false; P.takeDmg(25); spawnExplosion(this.x,this.y,1.5); showMsg('💥 Carro destruído!','d'); setTimeout(()=>{this.hp=this.maxHp;showMsg('🚗 Carro reparado.','i');},8000); }
+    if(this.hp<=0)return;
+    const amount=Math.max(0,Number.isFinite(v)?v:0)*garageStats().damageFactor;
+    this.hp=Math.max(0,this.hp-amount);
+    if(this.hp===0){
+      this.recoveryTimer=8000;this.speed=0;this.useTarget=false;
+      if(GS.inCar){
+        GS.inCar=false;
+        const fp=findFreePoint(this.x+50,this.y,13,140);
+        P.x=fp.x;P.y=fp.y;
+      }
+      P.takeDmg(25);spawnExplosion(this.x,this.y,1.5);
+      showMsg('💥 Veículo destruído. Socorro em 8s; reparo completo na garagem.','d');
+    }
   },
 };
 
