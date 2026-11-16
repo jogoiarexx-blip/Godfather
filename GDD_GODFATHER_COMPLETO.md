@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.1 • **Data:** 16/11/2026  
+**Versão do documento:** 1.2 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -36,9 +36,9 @@
 | Missões | 8 modelos adaptados a cada cidade = 24 missões da campanha | [ATUAL] |
 | Chefes | Barzini, Tattaglia, Stracci; cada um com 3 fases | [ATUAL] |
 | Armas | Pistola, shotgun e metralhadora | [ATUAL] |
-| Compra de armas e munição | Negociante; recarga completa de munição das armas compradas | [ATUAL] |
+| Compra de armas e munição | Oficina do negociante com compra selecionável, pacotes e reabastecimento completo | [ATUAL — v8.9] |
 | Vida máxima aprimorável | 100 → 250 HP, compras por níveis no painel Personagem | [ATUAL — v8.8] |
-| Melhorias das armas | Dano, carregador, precisão, recarga etc. | [PLANEJADO] |
+| Melhorias das armas | Dano, pente, recarga e precisão (3 níveis) e bolsa de munição | [ATUAL — v8.9] |
 | Armadura, kits médicos, estamina aprimorável | Capacidade de colete, cura consumível, 3 níveis de estamina e resistência | [ATUAL — v8.8] |
 | Patentes e guardas | Respeito, guarda-costas e 6 melhorias de guardas | [ATUAL] |
 | Interiores | Invasão, inimigos, responsável, intimidação | [ATUAL/PARCIAL] |
@@ -213,9 +213,9 @@ Proposta: comprar kits os coloca em inventário com limites (3 curativos, 2 kits
 
 **Compra atual:** shotgun **$2.500**; metralhadora **$6.000**; pistola gratuita. O código possui função de compra de munição **por recarga completa**: shotgun **$500**, metralhadora **$800**, e restaura reserva e carregador. O negociante pode ser acionado por interação perto do ponto designado; o HUD também oferece interação com slots de arma.
 
-**Lacunas reais:** não existe upgrade de dano/precisão/carregador das três armas, não existe carrinho de munição em quantidades menores, não existe loja dedicada visual de munição com quantidades e preços, e a pistola tem munição infinita.
+**Atualização v8.9:** oficina visual concluída com seleção de armas, melhorias e pacotes de munição. A pistola continua com reserva infinita, por design. A loja de suprimentos médicos continua na aba Personagem. A validação visual completa no navegador permanece pendente.
 
-### 6.2 Oficina de armas — categorias de melhoria [PLANEJADO]
+### 6.2 Oficina de armas — categorias de melhoria [ATUAL — v8.9]
 
 Cada arma tem quatro linhas independentes, três níveis por linha:
 
@@ -226,7 +226,7 @@ Cada arma tem quatro linhas independentes, três níveis por linha:
 
 A loja deve mostrar disponibilidade, nível (0/3 a 3/3), custo e diferença numérica. Todas as melhorias dependem de a arma ter sido comprada, exceto as da pistola inicial.
 
-### 6.3 Tabela de dano e carregador [PLANEJADO]
+### 6.3 Tabela de dano e carregador [ATUAL — v8.9]
 
 | Arma | Dano N0 → N1 → N2 → N3 | Carregador N0 → N1 → N2 → N3 |
 |---|---|---|
@@ -236,7 +236,7 @@ A loja deve mostrar disponibilidade, nível (0/3 a 3/3), custo e diferença num�
 
 O dano da shotgun é por projétil e precisa ser conferido contra os seis pellets; no máximo nível, disparo concentrado pode ser muito forte. Exigir playtest antes de implementar números finais.
 
-### 6.4 Preços por arma e categoria [PLANEJADO]
+### 6.4 Preços por arma e categoria [ATUAL — v8.9]
 
 | Arma | Dano N1/N2/N3 | Carregador N1/N2/N3 | Recarga N1/N2/N3 | Precisão N1/N2/N3 |
 |---|---|---|---|---|
@@ -246,9 +246,9 @@ O dano da shotgun é por projétil e precisa ser conferido contra os seis pellet
 
 **Recarga:** nível 1 −8%, nível 2 −16%, nível 3 −24% em comparação com o tempo base. **Precisão:** nível 1 −10%, nível 2 −18%, nível 3 −25% em dispersão/recuo, com teto e preservação do comportamento individual de cada arma. **Regra:** o preço do nível N deve ser pago em sequência, sem permitir saltos de nível.
 
-### 6.5 Loja de munição — pacotes [PLANEJADO]
+### 6.5 Loja de munição — pacotes [ATUAL — v8.9]
 
-Manter a recarga completa já existente enquanto uma nova interface é construída.
+Os pacotes e reabastecimento completo estão disponíveis na oficina do negociante. Pacotes pequenos/médios exigem espaço suficiente na reserva para a quantidade completa; caso contrário, não há débito. A recarga completa usa o preço fixo e repõe reserva e carregador.
 
 | Arma | Pacote pequeno | Pacote médio | Reabastecimento completo existente |
 |---|---|---|---|
@@ -267,14 +267,14 @@ Manter a recarga completa já existente enquanto uma nova interface é construí
 - Informar claramente “carregador / reserva” e quantidade após a operação.
 - Preços são de game design e podem ser reajustados após teste de economia.
 
-### 6.6 Crescimento da capacidade de munição [PLANEJADO]
+### 6.6 Crescimento da capacidade de munição [ATUAL — v8.9]
 
 Criar upgrades de **bolsa de munição** de 3 níveis, por arma: reserva de shotgun **20 → 30 → 40 → 60**, reserva da metralhadora **90 → 120 → 150 → 180**. Preços shotgun **$2.000 / $5.000 / $10.000**, metralhadora **$3.000 / $7.000 / $15.000**. O upgrade aumenta a capacidade, não entrega toda a nova munição de graça; um pacote de munição deve preencher respeitando o limite atualizado.
 
 ### 6.7 Fluxo de loja
 
 1. Aproximar-se do negociante e pressionar **E**.
-2. Abrir um **painel de loja** com abas “Armas”, “Munição”, “Melhorias” e “Suprimentos”.
+2. Abrir um **painel de loja** com abas “Armas”, “Munição” e “Melhorias”; suprimentos médicos permanecem na aba Personagem.
 3. Escolher categoria e item, visualizar custo, atributos e saldo.
 4. Confirmar compra somente quando houver saldo e o limite permitir.
 5. Debitar uma vez; atualizar HUD e mostrar confirmação.
@@ -502,9 +502,9 @@ O principal código executável está concentrado em **`index.html`** com script
 
 O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 18**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
-### 19.2 Extensão v18 [PARCIAL — playerProgress implementado; weaponProgress futuro]
+### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
-A estrutura v18 já inclui `playerProgress` com validação e migração de saves antigos. `weaponProgress` abaixo continua planejado para a fase de armamento:
+O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níveis de dano, carregador, recarga, precisão e bolsa por arma). Saves de versões antigas v7–v18 são migrados com níveis de armas zerados. Estrutura:
 
     playerProgress: {
       healthLevel: 0,
@@ -523,7 +523,7 @@ A estrutura v18 já inclui `playerProgress` com validação e migração de save
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
-**Migração:** versões anteriores à v18 recebem defaults de upgrade zero, HP máximo inicial 100 e armas com atributos base; manter o HP atual salvo dentro do novo teto. Fazer backup antes de gravar a nova versão.
+**Migração:** versões anteriores à v18 recebem atributos iniciais de personagem; versões anteriores à v19 recebem níveis de armas zerados e seus atributos originais. A restauração do progresso acontece antes da munição, que é limitada pela capacidade máxima. Manter backup válido antes de gravar a nova versão.
 
 ---
 
@@ -589,9 +589,9 @@ A estrutura v18 já inclui `playerProgress` com validação e migração de save
 
 **Entrega:** personagem pode crescer de 100 até 250 HP e usar equipamentos de sobrevivência com economia real.
 
-### Fase 2 — ARMAS E MUNIÇÃO (prioridade principal)
+### Fase 2 — ARMAS E MUNIÇÃO [IMPLEMENTADA v8.9, validação visual pendente]
 
-1. Criar loja visual dividida em Armas, Munição, Melhorias e Suprimentos.
+1. Criar loja visual dividida em Armas, Munição e Melhorias; suprimentos permanecem na aba Personagem.
 2. Manter funcionalidade existente de compra de shotgun e metralhadora.
 3. Oferecer pacotes de munição e reabastecimento completo.
 4. Implementar dano, carregador, recarga e precisão com três níveis por arma.
@@ -668,4 +668,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** validar o v8.8 em navegador real e avançar para **Fase 2 — loja de munição e upgrades individuais das armas**. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
+**Próxima implementação recomendada:** validar o v8.9 ponta a ponta no navegador, especialmente loja, combate externo/interno, continuação de saves v18 e a economia de Palermo/Chicago. Depois avançar para **Fase 3 — combate, IA e balanceamento dos chefes**. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
