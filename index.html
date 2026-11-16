@@ -2,11 +2,12 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.11.0</title>
+<title>Godfather Web Edition v8.12.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/player-progression.css">
 <link rel="stylesheet" href="css/weapon-shop.css">
+<link rel="stylesheet" href="css/city-contracts.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#d4af37;--gold-d:#a07820;--blood:#8b0000;--blood-b:#cc0000;--text:#e8d5a3;--dim:#8a7450}
@@ -385,6 +386,10 @@ body.menu-active #fps-counter{display:none!important}
     <!-- MISSÕES -->
     <div class="sb-pane" id="sbp-mis">
       <h2>🎯 MISSÕES</h2>
+      <p class="city-contract-help">Contratos extras de cada cidade. Podem ser feitos sem interromper a campanha principal.</p>
+      <div class="city-contract-heading">📜 CONTRATOS DA CIDADE</div>
+      <div id="city-contracts-content"></div>
+      <div class="city-contract-heading">🎯 CAMPANHA PRINCIPAL</div>
       <div id="mis-list"></div>
     </div>
     <!-- NEGÓCIOS -->
@@ -411,7 +416,7 @@ body.menu-active #fps-counter{display:none!important}
     </div>
     <!-- ROADMAP -->
     <div class="sb-pane" id="sbp-rmap">
-      <h2>🗺 ROADMAP v8.11</h2>
+      <h2>🗺 ROADMAP v8.12</h2>
       <div>
         <div class="rmap-item done">✅ <b>Mecânicas base</b> — WASD, mira, balas, pursuit</div>
         <div class="rmap-item done">✅ <b>IA Rival + Polícia</b> — 5 estrelas, raids, cerco</div>
@@ -442,6 +447,7 @@ body.menu-active #fps-counter{display:none!important}
         <div class="rmap-item done">✅ <b>v8.9 — Oficina</b> — armas, pacotes de munição e cinco melhorias permanentes</div>
         <div class="rmap-item done">✅ <b>v8.10 — IA tática</b> — memória de visão, flanco, atirador com mira e padrões de chefes</div>
         <div class="rmap-item done">✅ <b>v8.11 — Guarda-costas e polícia</b> — proteção, patrulhas e chefes equilibrados</div>
+        <div class="rmap-item done">✅ <b>v8.12 — Contratos exclusivos</b> — 9 missões extras, GPS, entregas e operações policiais</div>
         <div class="rmap-item pend">🔜 Próximas etapas — Balanceamento, guardas, veículos adicionais e garagem</div>
       </div>
     </div>
@@ -453,7 +459,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.11.0 · GUARDA-COSTAS, POLÍCIA E CHEFES</div>
+      <div class="ssub">WEB EDITION — v8.12.0 · CONTRATOS DE CIDADE</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -581,6 +587,7 @@ body.menu-active #fps-counter{display:none!important}
 <script src="js/weapon-progression.js"></script>
 <script src="js/combat-tactics.js"></script>
 <script src="js/security-tactics.js"></script>
+<script src="js/city-contracts.js"></script>
 <script>
 'use strict';
 
@@ -1166,6 +1173,7 @@ const MAP_DEFS = [
 function loadMap(mapId) {
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
+  cityContractsMapChange();
   resetBossState();resetPursuitSystem();
 
   // Reset world arrays
@@ -1252,6 +1260,7 @@ function loadMap(mapId) {
 async function loadMapReal(mapId){
   const def = MAP_DEFS[mapId];
   currentMapId = mapId;
+  cityContractsMapChange();
   resetBossState();resetPursuitSystem();
   await cityLoadStep(6,'LIMPANDO','Encerrando a cidade anterior...',()=>{ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;GUARDS.length=0;PROP_GUARDS.length=0;SAFEHOUSES.length=0;BULLETS.length=0;PARTS.length=0;FX.length=0;HEALTH_PACKS.length=0;COMBAT_TEXT.length=0;DEATH_ANIMS.length=0;INTERIOR.enemies.length=0;INTERIOR.bullets.length=0;reloadTimer=0;reloadWeapon=-1;recoilKick=0;meleeCD=0;meleeSwing=0;_winCache.clear();});
   await cityLoadStep(18,'DISTRITOS','Aplicando território, distritos e negócios...',()=>{
@@ -1620,6 +1629,7 @@ function updateBossHUD(){
 function bossWaypoint(){const b=BOSS_STATE.boss;return BOSS_STATE.active&&b?{x:b.x,y:b.y,name:'CHEFE · '+bossDef().name}:null;}
 function startFamilyBossBattle(){
   if(BOSS_STATE.active||BOSS_STATE.defeated||GS.gameOver||GS.won||playerDists()!==6||mainMenuActive||!gameSessionStarted)return;
+  if(cityContractsCurrent()){cityContractsAbandon(true);showMsg('📜 Contrato suspenso pela batalha final da família.','i');}
   const def=bossDef(),anchor=PROPS[11]||PROPS[PROPS.length-1]||{x:CFG.WW*.72,y:CFG.WH*.62};
   const fp=findFreePoint(anchor.x+S(95),anchor.y+S(105),32,300);
   ENEMIES.length=0;RIVALS.length=0;POLICE.length=0;BULLETS.length=0;
@@ -2539,7 +2549,7 @@ function performMelee(){
     spawnDeathAnim(best.kind==='police'?'police':'enemy',a);
     best.arr.splice(best.i,1);GS.killCount++;
     if(a.isBoss){finishFamilyBoss(a);}
-    else if(best.kind==='enemy'){GS.addMoney(80);GS.addHeat(CFG.HEAT_KILL);addKillCombo(x,y,1);misEvent('kill');}
+    else if(best.kind==='enemy'){GS.addMoney(80);GS.addHeat(CFG.HEAT_KILL);addKillCombo(x,y,1);misEvent('kill');cityContractsEnemyDown(a);}
     else if(best.kind==='rival'){GS.addMoney(120);GS.addRespect(80);GS.addHeat(CFG.HEAT_KILL*.5);addKillCombo(x,y,2);misEvent('rival_kill');}
     else{GS.addHeat(CFG.HEAT_KILL*2);GS.policeKills++;addKillCombo(x,y,0);misEvent('police_kill');}
   }
@@ -2932,7 +2942,7 @@ function updateBullets(dt) {
             const ex=ENEMIES[j].x, ey=ENEMIES[j].y;
             const dead=ENEMIES[j]; ENEMIES.splice(j,1); spawnDeathAnim('enemy',dead); GS.killCount++;
             if(dead.isBoss){finishFamilyBoss(dead);}
-            else{GS.addMoney(zone==='head'?100:80); GS.addHeat(CFG.HEAT_KILL);addKillCombo(ex, ey, 1);misEvent('kill');}
+            else{GS.addMoney(zone==='head'?100:80); GS.addHeat(CFG.HEAT_KILL);addKillCombo(ex, ey, 1);misEvent('kill');cityContractsEnemyDown(dead);}
           }
           hit=true; break;
         }
@@ -3065,6 +3075,7 @@ function misTick() {
   if(GS.stars>=3) misSt.hadHeat=true;
   if(misSt.hadHeat&&GS.stars===0) misSt.escaped=true;
   misRefresh(); if(activeMis) misCheck();
+  cityContractsTick();
 }
 function misCheck() {
   if(!activeMis) return;
@@ -3076,11 +3087,20 @@ function misCheck() {
   }
 }
 function misBanner() {
-  const b=document.getElementById('mbar');
-  if(activeMis){document.getElementById('mt').textContent='🎯 '+activeMis.title;document.getElementById('md').textContent=activeMis.desc;b.classList.add('on');}
-  else b.classList.remove('on');
+  const b=document.getElementById('mbar'),contract=cityContractsCurrent();
+  if(contract){
+    const d=cityContractDefinition(contract.id);
+    document.getElementById('mt').textContent='📜 '+d.title;
+    document.getElementById('md').textContent=cityContractsObjective();
+    b.classList.add('on');
+  }else if(activeMis){
+    document.getElementById('mt').textContent='🎯 '+activeMis.title;
+    document.getElementById('md').textContent=activeMis.desc;
+    b.classList.add('on');
+  }else b.classList.remove('on');
 }
 function misPanelRender() {
+  cityContractsRender();
   misRefresh(); const l=document.getElementById('mis-list'); l.innerHTML='';
   for(const m of MIS){const d=document.createElement('div');d.className='mis-item '+(m.status==='completed'?'done-m':m.status==='active'?'active-m':m.status==='locked'?'locked-m':'');d.innerHTML='<h3>'+(m.status==='completed'?'✅':m.status==='active'?'🎯':m.status==='locked'?'🔒':'○')+' '+m.title+'</h3><p>'+m.desc+'</p><p class="rew">💰 $'+m.rew.m.toLocaleString()+' · ⭐ '+m.rew.r+'</p>'+(m.status==='available'?'<p style="color:#d4af37;font-size:12px;margin-top:4px">Clique para iniciar</p>':'');if(m.status==='available')d.addEventListener('click',()=>misActivate(m.id));l.appendChild(d);}
 }
@@ -3383,6 +3403,8 @@ function processWASD(dt) {
 // ══════════════════════════════════════════════════════════════════════
 function tryExtort() {
   if (intimActive||BUILDING_LOAD.active) return;
+  // Contract pickup/delivery takes precedence only at its marked location.
+  if(cityContractsTryInteract())return;
   // Dealer is close to another property in some cities; shop takes precedence.
   if(weaponShopInRange()){openWeaponShop();return;}
   const pr=nearProp(P.x,P.y,100);
@@ -4205,6 +4227,9 @@ function nearestSafeTarget(){
 }
 function getMissionWaypoint(){
   const bw=bossWaypoint();if(bw)return bw;
+  // While a side contract is active, its waypoint becomes the GPS focus;
+  // the campaign mission remains active and resumes when the contract ends.
+  const cw=cityContractsWaypoint();if(cw)return cw;
   if(!activeMis)return null;
   let p=null;
   switch(activeMis.id){
@@ -4466,7 +4491,7 @@ let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
 function isValidSaveData(d){
-  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].includes(d.ver))return false;
+  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22].includes(d.ver))return false;
   if(!Number.isInteger(d.mapId)||d.mapId<0||d.mapId>=MAP_DEFS.length)return false;
   if(!Number.isFinite(d.money)||d.money<0||!Number.isFinite(d.respect)||d.respect<0)return false;
   if(!Number.isFinite(d.px)||!Number.isFinite(d.py))return false;
@@ -4487,12 +4512,13 @@ function isValidSaveData(d){
     if(!securityGuardStatesValid(d.bodyguardStates))return false;
     if(!Array.isArray(d.police)||!d.police.every(p=>p&&Number.isFinite(p.searchPhase)&&p.searchPhase>=0&&p.searchPhase<=Math.PI*2))return false;
   }
+  if(d.ver>=22&&!cityContractsValid(d.cityContracts))return false;
   return true;
 }
 
 function saveGame() {
   const data = {
-    ver: 21,
+    ver: 22,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4503,6 +4529,7 @@ function saveGame() {
     php: P.hp, pangle:P.angle,
     playerProgress:snapshotPlayerProgress(),
     weaponProgress:weaponProgressSnapshot(),
+    cityContracts:cityContractsSnapshot(),
     heat:GS.heat, stars:GS.stars, wantedTimer:GS.wantedTimer, wantedClearing:GS.wantedClearing,
     inCar:INTERIOR.active?false:GS.inCar,
     car:{x:CAR.x,y:CAR.y,hp:CAR.hp,maxHp:CAR.maxHp,angle:CAR.angle,speed:CAR.speed},
@@ -4510,7 +4537,7 @@ function saveGame() {
     gameMinutes, minimapVisible,
     rivalPower, rivalThink,
     police:POLICE.map(p=>({x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,angle:p.angle,sTimer:p.sTimer,carHitCd:p.carHitCd||0,id:p.id,lastSeenX:p.lastSeenX,lastSeenY:p.lastSeenY,searchTimer:p.searchTimer,searchPhase:securityPoliceRecord(p),hasVisual:p.hasVisual})),
-    enemies:ENEMIES.map(e=>({x:e.x,y:e.y,hp:e.hp,maxHp:e.maxHp,type:e.type,angle:e.angle,sTimer:e.sTimer,alertDist:e.alertDist,state:e.state,wf:e.wf,wt:e.wt,navSeed:e.navSeed,stun:e.stun||0,isBoss:!!e.isBoss,bossId:e.bossId||null,specialTimer:e.specialTimer||0,summonTimer:e.summonTimer||0,bossWarning:e.isBoss?(e.bossWarning||null):null,...combatEnemySerialize(e)})),
+    enemies:ENEMIES.map(e=>({x:e.x,y:e.y,hp:e.hp,maxHp:e.maxHp,type:e.type,angle:e.angle,sTimer:e.sTimer,alertDist:e.alertDist,state:e.state,wf:e.wf,wt:e.wt,navSeed:e.navSeed,stun:e.stun||0,isBoss:!!e.isBoss,bossId:e.bossId||null,specialTimer:e.specialTimer||0,summonTimer:e.summonTimer||0,cityContractId:e.cityContractId||null,bossWarning:e.isBoss?(e.bossWarning||null):null,...combatEnemySerialize(e)})),
     bossState:{active:BOSS_STATE.active,defeated:BOSS_STATE.defeated,acknowledged:BOSS_STATE.acknowledged,mapId:BOSS_STATE.mapId,bossId:BOSS_STATE.bossId,phase:BOSS_STATE.phase},
     rivals:RIVALS.map(r=>({x:r.x,y:r.y,hp:r.hp,maxHp:r.maxHp,angle:r.angle,sTimer:r.sTimer,state:r.state,ptx:r.ptx,pty:r.pty,home:r.home,alertDist:r.alertDist,captureTimer:r.captureTimer||0,raidTargetId:r.raidTarget?r.raidTarget.id:null})),
     healthPacks:HEALTH_PACKS.map(h=>({...h})),
@@ -4643,6 +4670,9 @@ function loadGame() {
       else if(BOSS_STATE.active){_conquestTriggered=true;updateBossHUD();}
       else if(BOSS_STATE.defeated){_conquestTriggered=true;document.getElementById('boss-hud')?.classList.remove('on');}
     }
+
+    // Restore side contracts only after NPCs and boss state exist.
+    cityContractsRestore(data.ver>=22?data.cityContracts:{completed:[[],[],[]],active:null});
 
     // Recalc derived state. Property guards first, then safehouse guards so neither list erases the other.
     recalcIncome();
@@ -4806,6 +4836,7 @@ function resetCampaignProgress(){
   GS.gameOver=false;GS.won=false;GS.paused=true;GS.inCar=false;GS.passiveIncome=0;
   GS.heat=0;GS.stars=0;GS.wantedTimer=0;GS.wantedClearing=false;GS.camX=0;GS.camY=0;
   resetPlayerProgress();
+  cityContractsReset();
   P.hp=P.maxHp;P.invincible=0;P.angle=0;P.wFrame=0;P.wTimer=0;P.sprShoot=0;P.moving=false;
   curWeapon=0;weaponOwned=[true,false,false];
   weaponProgressReset();
