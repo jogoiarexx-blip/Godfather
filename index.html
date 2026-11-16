@@ -4379,6 +4379,13 @@ function loop(ts) {
     if(e.isBoss)combatDrawBossWarning(ctx,e);
     drawEnemy(e.x,e.y,e.angle,e.hp,e.maxHp,e.type,e.wf,e);
     combatDrawEnemyTell(ctx,e);
+    // Contract targets are visually marked and use a live GPS waypoint.
+    if(e.cityContractId&&cityContractsCurrent()?.id===e.cityContractId){
+      ctx.save();ctx.fillStyle='#ff6258';ctx.strokeStyle='#170a0a';ctx.lineWidth=2;
+      ctx.font='bold 19px Cinzel,serif';ctx.textAlign='center';
+      ctx.strokeText('◆',e.x,e.y-81);ctx.fillText('◆',e.x,e.y-81);
+      ctx.restore();
+    }
     if(e.isBoss){ctx.save();ctx.textAlign='center';ctx.font='24px serif';ctx.shadowColor='rgba(255,195,55,.75)';ctx.shadowBlur=12;ctx.fillText('👑',e.x,e.y-78);ctx.shadowBlur=0;ctx.restore();}
     if(e.state==='chase'){ctx.fillStyle='rgba(255,220,0,.85)';ctx.font='bold 14px serif';ctx.textAlign='center';ctx.shadowColor='rgba(255,200,0,.6)';ctx.shadowBlur=7;ctx.fillText('!',e.x,e.y-66);ctx.shadowBlur=0;}
     if(dbg){ctx.strokeStyle='rgba(255,0,0,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(e.x,e.y,actorBodyRadius(e),0,Math.PI*2);ctx.stroke();}
