@@ -196,6 +196,18 @@ function cityContractsWaypoint(){
     const sh=typeof nearestSafeTarget==='function'?nearestSafeTarget():null;
     return sh?{x:sh.x,y:sh.y,name:'Desapareça da polícia'}:null;
   }
+  if(d.kind==='hunt'){
+    // GPS follows the nearest living contract target, even when it leaves
+    // the original hideout; tracking only the property could strand the player.
+    let nearest=null,nearestDistance=Infinity;
+    for(const enemy of ENEMIES){
+      if(enemy.cityContractId!==d.id||enemy.hp<=0)continue;
+      const distance=Math.hypot(enemy.x-P.x,enemy.y-P.y);
+      if(distance<nearestDistance){nearestDistance=distance;nearest=enemy;}
+    }
+    if(nearest)return {x:nearest.x,y:nearest.y,
+      name:'ALVO · '+(d.total-a.kills)+' restante(s)'};
+  }
   const target=cityContractsCurrentTarget();
   if(!target)return null;
   const name=d.kind==='courier'?(a.stage===0?'COLETAR · ':'ENTREGAR · '):
