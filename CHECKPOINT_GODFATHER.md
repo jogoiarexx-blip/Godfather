@@ -1,4 +1,54 @@
-# CHECKPOINT ATUAL — GODFATHER v8.11.0
+# CHECKPOINT ATUAL — GODFATHER v8.12.0
+
+**Atualizado em:** 16/11/2026  
+**GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md) v1.5  
+**Estado:** Fase 4 (mundo e missões) iniciada; 9 contratos específicos e três mecânicas de contrato integradas. Publicação de código confirmada no GitHub; playtest completo de navegador ainda pendente.
+
+## Diagnóstico de conteúdo
+- A campanha mantém 8 modelos de missões por cidade, com 24 etapas e títulos ajustados, mas pouca variedade mecânica realmente exclusiva.
+- Os eventos de rua existentes são randômicos e não possuem objetivos narrativos persistentes.
+- Sistema principal de missões, GPS, mundo, HUD e saves podiam ser reutilizados para contratos opcionais sem criar mais menus ou substituir campanha.
+
+## Atualização v8.12
+- **Nove contratos extras:** três por cidade, escritos individualmente para Nova Corleone, Palermo Oscura e Chicago Noir, com pré-requisitos de respeito, locais e pagamentos específicos.
+- **Courier:** ir ao ponto de coleta, pressionar E, transportar a encomenda ao destino e pressionar E novamente (3 missões).
+- **Hunt:** eliminar apenas NPCs marcados com ID único do contrato, criados perto do negócio-alvo (3 missões). Mortes com tiro ou melee são contabilizadas; inimigos comuns não contam.
+- **Escape/Heist:** executar golpe pressionando E ao lado do local, iniciar perseguição real e só completar quando as estrelas/calor retornarem a zero (3 missões). Não pode executar de dentro de zona segura.
+- **UI limpa:** três cartões de contrato dentro da aba Missões, acima das 8 missões principais. Estado, narrativa, recompensa, respeito mínimo, aceite e abandono.
+- **GPS vivo:** marcador prioriza contrato opcional ativo, alvos de caçada seguem o NPC vivo mais próximo (em vez do prédio fixo), com identificação vermelha nos sprites inimigos. Missão principal continua ativa por baixo e reaparece depois do contrato.
+- **Economia:** recompensa liberada apenas uma vez por contrato e por campanha; contratos terminados não podem ser recomeçados.
+- **Interrupções:** abandonar a caçada remove os inimigos vinculados; o início do boss interrompe o contrato antes da limpeza da arena; transição entre cidades abandona contrato ativo da cidade anterior mas mantém os contratos concluídos em cada cidade.
+- **Save versão 22:** `cityContracts` salva IDs concluídos por cidade, estágio e progresso do contrato ativo; o campo `cityContractId` persiste nos inimigos específicos. Saves v7–v21 migram para contratos inicialmente vazios. Dados inválidos não são aceitos.
+- **Arquivos novos:** `js/city-contracts.js`, `css/city-contracts.css`, `tests/city-contracts.test.cjs`. `index.html` inclui HTML, CSS, módulo, hooks e save v22.
+
+## Publicações principais
+1. Motor de contratos: `e4b8e0da5e4a836954ec098b72fa8f32833025e5`.
+2. Estilos de UI: `b7638fa6f6b4240226e3ccfdd8b15b56350250be`.
+3. Integração ao jogo: `cb8492b450e184e434558ebfc1544a76559ab5c5`.
+4. Suite Node reproduzível: `bf4f5b3da2c8935b3b60d67c1b5000bacf1bd278`.
+5. Validação de estado de perseguição e cidade do contrato: `818ea7b9b32bd00b05b8de02541c26dc52b911ec`.
+6. Validação adicional de save v22: `4b61508108684e87bbbfcce7c6a08beba5823098`.
+7. GDD atualizado: `708ea73d3fc24a775122fb1ed0a9ccd16ce195ab`.
+8. GPS de caçada que segue o alvo vivo: `ed3b9c40cfcd98fd251c7a4822984fd6f341b0a7`.
+9. Marcação visual dos alvos: `3a0dc6b9fbc567d25909e4402dd62568d54fe5e2`.
+
+## Testes executados
+- **46 verificações de lógica** em ambiente JavaScript: nove contratos, IDs únicos, entrega em dois pontos, recompensa exata uma vez, kills marcadas, progresso da perseguição, abandono, restauração de caçada e transições de cidade — passaram.
+- **12 verificações de integridade de save**: v17, v19, v21 e v22, estados de caçada, fuga inválida, ID/contagem malformada, cidade divergente e falta de dados obrigatórios — passaram.
+- **7 verificações adicionais do GPS:** rastreio de inimigo vivo mais próximo, contagem de alvos restantes e limpeza após abandono — passaram.
+- **Sintaxe:** módulo de contratos e scripts combinados com o motor e módulos existentes — passou.
+- Testes persistentes em `tests/city-contracts.test.cjs` foram **escritos e tiveram sintaxe verificada**, mas a execução real da suite Node no repositório não foi confirmada por este ambiente.
+- **Não testado**: comportamento visual completo no navegador, custos de desempenho/FPS, fluxo ponta a ponta da perseguição com clique/teclado, restauração durante uma luta real e balanceamento das três cidades.
+
+## Próxima implementação recomendada
+1. Executar `node --test tests/*.test.cjs` em clone local ou CI e corrigir eventuais falhas de integração.
+2. Fazer playtest completo de pelo menos um courier, hunt e heist por cidade, com save durante cada etapa.
+3. Evoluir **Fase 4**: garagem e veículos dirigíveis, comportamento do tráfego, mais interiores e atividades do mundo sem perda de FPS.
+4. Ajustar recompensas dos contratos de Palermo/Chicago e equilíbrio de alvos após observação da economia real do jogador.
+
+---
+
+# CHECKPOINT ANTERIOR — GODFATHER v8.11.0
 
 **Atualizado em:** 16/11/2026  
 **GDD:** [GDD_GODFATHER_COMPLETO.md](GDD_GODFATHER_COMPLETO.md), revisão 1.4  
