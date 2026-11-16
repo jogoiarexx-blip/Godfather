@@ -4512,7 +4512,7 @@ function isValidSaveData(d){
     if(!securityGuardStatesValid(d.bodyguardStates))return false;
     if(!Array.isArray(d.police)||!d.police.every(p=>p&&Number.isFinite(p.searchPhase)&&p.searchPhase>=0&&p.searchPhase<=Math.PI*2))return false;
   }
-  if(d.ver>=22&&!cityContractsValid(d.cityContracts))return false;
+  if(d.ver>=22&&(!cityContractsValid(d.cityContracts)||(d.cityContracts.active&&d.cityContracts.active.city!==d.mapId)))return false;
   return true;
 }
 
