@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.3 • **Data:** 16/11/2026  
+**Versão do documento:** 1.4 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -34,7 +34,7 @@
 | Territórios | 6 distritos por cidade = 18 | [ATUAL] |
 | Negócios | 12 por cidade = 36 | [ATUAL] |
 | Missões | 8 modelos adaptados a cada cidade = 24 missões da campanha | [ATUAL] |
-| Chefes | Barzini, Tattaglia, Stracci; três fases e ataques especiais exclusivos com aviso visual | [ATUAL — v8.10] |
+| Chefes | Três fases, ataques especiais exclusivos e limites para rajadas/reforços | [ATUAL — v8.11] |
 | Armas | Pistola, shotgun e metralhadora | [ATUAL] |
 | Compra de armas e munição | Oficina do negociante com compra selecionável, pacotes e reabastecimento completo | [ATUAL — v8.9] |
 | Vida máxima aprimorável | 100 → 250 HP, compras por níveis no painel Personagem | [ATUAL — v8.8] |
@@ -500,7 +500,7 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 20**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 21**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
 ### 19.2 Extensão v19 [ATUAL — playerProgress e weaponProgress implementados]
 
@@ -526,6 +526,14 @@ O formato v19 preserva `playerProgress` (v18) e adiciona `weaponProgress` (níve
 O save v20 mantém as versões v7–v19 aceitas e grava os campos de IA dos inimigos de rua: `aiMemory`, `aiLastX`, `aiLastY`, `strafeSide`, `strafeTimer`, `aimTimer`, `aimX` e `aimY`. Chefes também gravam `bossWarning` com tipo, direção, duração, tempo restante e fase. Dessa forma, carregar a partida não reinicia arbitrariamente o aviso de ataque especial já iniciado. O sistema sanitiza avisos inválidos e restaura memória tática padrão quando o save anterior não possui esses campos.
 
 **Notas de combate v8.10:** inimigos comuns precisam ter linha de visão para atirar; se perderem o alvo, procuram brevemente a última posição confirmada. Atiradores fazem mira de 750 ms com linha visível. Brutamontes disparam dois projéteis reduzidos para manter o dano próximo do orçamento original. Chefes interrompem o disparo normal durante o ataque sinalizado. Os três padrões exigem playtest real para calibrar justiça e dificuldade.
+
+### 19.4 Extensão v21 — segurança, escolta e busca policial [ATUAL]
+
+O formato v21 mantém a leitura de saves v7–v20 e adiciona `bodyguardStates` com `hp`, `dead`, `respawnTimer` e `sTimer` de cada guarda-costas (até oito registros, validados). A antiga falha de recuperar um guarda morto com um simples carregamento fica corrigida a partir dos saves gerados nesta versão. As patrulhas policiais guardam `searchPhase`, o ângulo da busca local após perder a última posição vista, limitado a 0–2π. O código normaliza esse campo em saves antigos.
+
+**Combate da v8.11:** guarda-costas não atiram através de paredes e priorizam inimigos próximos ao jogador. Quando procurado com estrelas ativas, combatem policiais visíveis; com zero estrelas ou em zona segura, não iniciam fogo contra agentes que ainda estiverem patrulhando. A detecção policial de curta distância também exige linha de visão real. A busca policial é dirigida por `dt`, não pelo relógio do sistema.
+
+**Chefes:** quantidade de disparos das rajadas normais progride 1 / 3 / 5 por fase, mas o dano **total teórico da rajada** é limitado a 1,00× / 1,65× / 2,10× do ataque base do chefe. O limite de capangas é 3 / 4 / 5 conforme a fase, com no máximo +1 em cidades posteriores. Reforços ganham composição por cidade sem atravessar o limite. Após especial avisado, o chefe respeita janela de recuperação de pelo menos 620 ms antes de voltar a disparar normalmente. Esses números são configuração de balanceamento, não evidência de dificuldade ideal; exigem teste presencial no jogo.
 
 **Invariantes de save:** upgrades entre 0 e 3 (vida pode chegar ao nível 4); munição entre 0 e capacidade; armadura ≤ capacidade; HP entre 0 e máximo; dinheiro finito não negativo; dados desconhecidos não quebram a migração; valores e IDs de armas são independentes da interface.
 
@@ -606,12 +614,12 @@ O save v20 mantém as versões v7–v19 aceitas e grava os campos de IA dos inim
 
 **Entrega:** todas as três armas possuem progressão própria e munição pode ser comprada de forma intuitiva.
 
-### Fase 3 — COMBATE E IA [EM ANDAMENTO v8.10]
+### Fase 3 — COMBATE E IA [EM ANDAMENTO v8.11]
 
 1. [PARCIAL] Reações a headshot e melee; decaimento correto de animações de disparo em interiores.
-2. [PARCIAL] IA tática dos quatro arquétipos com busca, memória de última visão, flanco e aviso de mira. Melhorias de guarda-costas permanecem pendentes.
-3. [PENDENTE] Validar colisões, cobertura e perseguição policial com sessões completas de navegador.
-4. [PENDENTE] Rebalancear chefes e inimigos para HP máximo 250 e armas evoluídas, com métricas de tempo de combate.
+2. [ATUAL/PARCIAL] IA tática dos quatro arquétipos; guarda-costas agora protegem o jogador, miram apenas em inimigos visíveis, não provocam policiais com 0 estrelas e mantêm HP/respawn no save v21. Teste visual completo pendente.
+3. [ATUAL/PARCIAL] Polícia deixou de enxergar através de paredes próximas e executa busca determinística baseada em tempo de simulação; validação de perseguição em navegador real pendente.
+4. [PARCIAL] Chefes usam orçamento limitado de dano total por rajada e limites para reforços nas três fases; há intervalo de recuperação após especiais. Balanceamento definitivo para HP 100–250 e armas aprimoradas depende de playtests.
 5. [ATUAL] Padrões especiais exclusivos e telegráficos: Barzini — anel radial; Tattaglia — rajada frontal em leque; Stracci — fogo cruzado. Novos sinais com 850/1020/1180 ms de antecipação por chefe.
 
 ### Fase 4 — MUNDO E MISSÕES
@@ -674,4 +682,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** executar playtests visuais do v8.10 em navegador (interiores, rua, 3 chefes, saves antigos) e, depois, aprimorar guarda-costas, patrulhas e balanceamento da Fase 3. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
+**Próxima implementação recomendada:** executar playtest v8.11 em navegador real — perseguições e visão policial, proteção por guarda-costas, morte/restauração de guardas, 3 batalhas de chefe em diferentes níveis de equipamento e saves v20. Depois iniciar ajustes de ambiente, veículos e conteúdo conforme Fase 4. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
