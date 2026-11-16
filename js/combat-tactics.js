@@ -214,6 +214,9 @@ function combatBossSpecialTick(b,dt,def,dist){
       combatBossSignature(b,b.bossWarning,def);
       b.bossWarning=null;
       b.specialTimer=[4400,3550,2900][phase];
+      // Recovery window after a major attack: don't immediately stack a normal
+      // volley on the exact frame after the telegraphed pattern is fired.
+      b.sTimer=Math.max(Number.isFinite(b.sTimer)?b.sTimer:0,620);
     }
     return;
   }
