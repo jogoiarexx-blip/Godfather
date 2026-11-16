@@ -1,6 +1,6 @@
 # GODFATHER WEB EDITION — GDD COMPLETO
 
-**Versão do documento:** 1.0 • **Data:** 16/11/2026  
+**Versão do documento:** 1.1 • **Data:** 16/11/2026  
 **Repositório:** https://github.com/jogoiarexx-blip/Godfather  
 **Jogo:** https://jogoiarexx-blip.github.io/Godfather/  
 **Plataforma atual:** browser desktop, HTML/CSS/Canvas 2D/JavaScript, GitHub Pages  
@@ -37,9 +37,9 @@
 | Chefes | Barzini, Tattaglia, Stracci; cada um com 3 fases | [ATUAL] |
 | Armas | Pistola, shotgun e metralhadora | [ATUAL] |
 | Compra de armas e munição | Negociante; recarga completa de munição das armas compradas | [ATUAL] |
-| Vida máxima aprimorável | 100 HP fixos no começo do código; não existe loja de upgrade pessoal | [PLANEJADO] |
+| Vida máxima aprimorável | 100 → 250 HP, compras por níveis no painel Personagem | [ATUAL — v8.8] |
 | Melhorias das armas | Dano, carregador, precisão, recarga etc. | [PLANEJADO] |
-| Armadura, kits médicos, estamina aprimorável | Novos componentes de progressão | [PLANEJADO] |
+| Armadura, kits médicos, estamina aprimorável | Capacidade de colete, cura consumível, 3 níveis de estamina e resistência | [ATUAL — v8.8] |
 | Patentes e guardas | Respeito, guarda-costas e 6 melhorias de guardas | [ATUAL] |
 | Interiores | Invasão, inimigos, responsável, intimidação | [ATUAL/PARCIAL] |
 | Carros e perseguições | Carro jogável, polícia, viaturas e bloqueios | [ATUAL] |
@@ -144,9 +144,9 @@ Cada cidade reutiliza uma base espacial de 2400 × 1800 unidades, multiplicada p
 - Respeito inicial: **0**.
 - Estado inicial de armas: shotgun e metralhadora bloqueadas.
 
-### 5.2 Novo menu de evolução do jogador [PLANEJADO]
+### 5.2 Menu de evolução do jogador [PARCIAL — v8.8: treinamento e suprimentos implementados; arsenal na fase 2]
 
-Criar no painel lateral a aba **PERSONAGEM**, organizada em quatro categorias:
+A aba **PERSONAGEM** já oferece treinamento e suprimentos na zona segura (atalho **P**, kits pelo **H**). A proposta final inclui quatro categorias:
 - **Saúde & resistência:** vida máxima, recuperação, estamina e armadura.
 - **Combate:** precisão geral, controle de recuo e movimentação tática.
 - **Arsenal:** melhoria da pistola, shotgun e metralhadora individualmente.
@@ -154,7 +154,7 @@ Criar no painel lateral a aba **PERSONAGEM**, organizada em quatro categorias:
 
 Toda compra mostra preço, nível atual, valor atual, novo valor e impacto esperado. Comprar deve produzir efeito imediato, persistir no save e não exigir reiniciar a fase.
 
-### 5.3 Vida máxima — evolução de cinco níveis [PLANEJADO]
+### 5.3 Vida máxima — evolução de cinco níveis [ATUAL — v8.8]
 
 | Nível de treinamento | HP máximo | Preço para chegar ao nível | Requisito sugerido |
 |---|---:|---:|---|
@@ -166,7 +166,7 @@ Toda compra mostra preço, nível atual, valor atual, novo valor e impacto esper
 
 **Regras:** a compra aumenta HP máximo e recupera somente a diferença de máximo (ex.: 45/100 torna-se 75/130 ao comprar nível 1); nunca cura totalmente de graça. HP não pode ultrapassar máximo; limite 250 nesta primeira versão. Melhorias são permanentes na campanha e não se repetem ao retornar à loja. Ao continuar um save antigo, assumir nível 0 e preservar HP original.
 
-### 5.4 Regeneração e resistência [PLANEJADO]
+### 5.4 Regeneração e resistência [ATUAL — v8.8]
 
 **Linha Recuperação:** três níveis, custos **$1.500 / $4.000 / $9.000**; bônus de cura fora de combate +0,25 / +0,50 / +0,75 HP/s sobre a taxa base, sem permitir cura ativa sob fogo inimigo. Na zona segura, utilizar regra separada e limite total de cura por segundo para evitar efeito excessivo.
 
@@ -174,13 +174,13 @@ Toda compra mostra preço, nível atual, valor atual, novo valor e impacto esper
 
 **Linha Resistência a impacto:** três níveis com redução de dano não explosivo sugerida de **5% / 10% / 15%**, preços **$2.500 / $7.000 / $16.000**, depois de aplicação de armadura, sem combinar multiplicativamente sem teto.
 
-### 5.5 Colete/armadura [PLANEJADO]
+### 5.5 Colete/armadura [ATUAL — v8.8]
 
 Armadura é separada de HP e pode ser consumida. Níveis de capacidade: **0 / 25 / 50 / 80**, com melhorias permanentes **$3.000 / $8.000 / $18.000**. Colete absorve **50%** do dano recebido até acabar; o restante atinge HP. Comprar capacidade aumenta o limite, mas não repõe toda a armadura automaticamente.
 
 **Reabastecimento de armadura:** custa **$150** para +25 pontos; **$350** para +60 pontos; a quantidade efetiva nunca ultrapassa a capacidade atual. Não vender colete a quem ainda não desbloqueou armadura.
 
-### 5.6 Kits médicos [PLANEJADO]
+### 5.6 Kits médicos [ATUAL — v8.8]
 
 | Item | Efeito | Preço sugerido | Restrição |
 |---|---|---:|---|
@@ -500,11 +500,11 @@ O principal código executável está concentrado em **`index.html`** com script
 
 ### 19.1 Formato existente [ATUAL]
 
-O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 17**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
+O save usa `localStorage`, chave `gf_save_v7` (mantida por compatibilidade) e payload que se identifica como **versão 18**. Inclui posição, HP atual, economia, propriedades, missões, armas/munição, guarda-costas, chefes e outros estados. Existem autosave, save manual, backup e importação/exportação.
 
-### 19.2 Extensão v18 proposta [PLANEJADO]
+### 19.2 Extensão v18 [PARCIAL — playerProgress implementado; weaponProgress futuro]
 
-Adicionar à estrutura, com validação e migração:
+A estrutura v18 já inclui `playerProgress` com validação e migração de saves antigos. `weaponProgress` abaixo continua planejado para a fase de armamento:
 
     playerProgress: {
       healthLevel: 0,
@@ -579,7 +579,7 @@ Adicionar à estrutura, com validação e migração:
 
 **Entrega:** campanha existente segura e continuável.
 
-### Fase 1 — EVOLUÇÃO DO PROTAGONISTA (prioridade principal)
+### Fase 1 — EVOLUÇÃO DO PROTAGONISTA [IMPLEMENTADO v8.8, validação manual pendente]
 
 1. Adicionar `PlayerProgress`, atributos derivados e caps.
 2. Criar UI de Personagem e loja de HP, regeneração e estamina.
@@ -668,4 +668,4 @@ O jogo será considerado **completo** quando:
 - Houver metas mensuráveis de performance e nenhuma regressão crítica aberta.
 - Cada entrega tiver checkpoint e rastreabilidade GitHub.
 
-**Próxima implementação recomendada:** Fase 1 — vida máxima, regeneração, estamina, armadura e menu Personagem; depois Fase 2 — loja de munição e upgrades de armas.
+**Próxima implementação recomendada:** validar o v8.8 em navegador real e avançar para **Fase 2 — loja de munição e upgrades individuais das armas**. Consulte [CHECKPOINT_GODFATHER.md](CHECKPOINT_GODFATHER.md).
