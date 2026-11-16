@@ -2,9 +2,10 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Godfather Web Edition v8.7.1</title>
+<title>Godfather Web Edition v8.8.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2252%22 font-size=%2252%22>🌹</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/player-progression.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#d4af37;--gold-d:#a07820;--blood:#8b0000;--blood-b:#cc0000;--text:#e8d5a3;--dim:#8a7450}
@@ -279,7 +280,8 @@ body.menu-active #fps-counter{display:none!important}
   <div class="hb"><span class="hl">⭐ Respeito</span><span class="hv" id="hresp">0</span></div>
   <div class="hb"><span class="hl">🎖️ Rank</span><span class="hv" id="hrank">Soldado</span></div>
   <div class="hb"><span class="hl">🚔 Procurado</span><div style="display:flex;gap:3px;margin-top:3px"><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);transition:all .3s" id="sd0"></div><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);transition:all .3s" id="sd1"></div><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);transition:all .3s" id="sd2"></div><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);transition:all .3s" id="sd3"></div><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);transition:all .3s" id="sd4"></div></div></div>
-  <div class="hb"><span class="hl">❤️ Vida</span><div id="hp-wrap"><div id="hp-bar"></div></div></div>
+  <div class="hb"><span class="hl">❤️ Vida</span><div id="hp-wrap"><div id="hp-bar"></div></div><span id="hp-numeric">100/100</span></div>
+<div class="hb" id="armor-hud" style="display:none"><span class="hl">🦺 Colete</span><div id="armor-track"><div id="armor-bar"></div></div><span id="armor-value">0/0</span></div>
   <div class="hb"><span class="hl">🔥 Heat</span><div id="bar-wrap"><div id="heat-bar"></div></div></div>
   <div class="hb"><span class="hl">🏘️ Distritos</span><span class="hv" id="hdist">0/6</span></div>
   <div class="hb" id="hmap-block"><span class="hl">🗺 Território</span><span class="hv" id="hmap" style="font-size:11px;letter-spacing:1px">Nova Corleone</span></div>
@@ -365,6 +367,7 @@ body.menu-active #fps-counter{display:none!important}
   <!-- Tab strip -->
   <div id="sb-tabs">
     <div class="sb-tab" id="sbt-mis" title="Missões (M)" onclick="sbOpen('mis')">🎯<div class="sb-badge" id="sbd-mis"></div></div>
+<div class="sb-tab" id="sbt-char" title="Personagem (P)" onclick="sbOpen('char')">❤️</div>
     <div class="sb-tab" id="sbt-upg" title="Negócios (U)" onclick="sbOpen('upg')">🏛</div>
     <div class="sb-tab" id="sbt-guard" title="Guardas" onclick="sbOpen('guard')">🛡</div>
     <div class="sb-tab" id="sbt-house" title="Imóveis (E)" onclick="sbOpen('house')">🏠</div>
@@ -376,6 +379,8 @@ body.menu-active #fps-counter{display:none!important}
   </div>
   <!-- Slide-out panel -->
   <div id="sb-panel">
+    <!-- PERSONAGEM -->
+    <div class="sb-pane" id="sbp-char"><h2>❤️ PERSONAGEM</h2><div id="player-progress-content"></div></div>
     <!-- MISSÕES -->
     <div class="sb-pane" id="sbp-mis">
       <h2>🎯 MISSÕES</h2>
@@ -443,7 +448,7 @@ body.menu-active #fps-counter{display:none!important}
     <section id="menu-brand">
       <span id="sr">🌹</span>
       <h1>GODFATHER</h1>
-      <div class="ssub">WEB EDITION — v8.7.1 · INTERIORES TESTADOS & CORRIGIDOS</div>
+      <div class="ssub">WEB EDITION — v8.8.0 · INTERIORES TESTADOS & CORRIGIDOS</div>
       <div id="sstory">
         <p>Construa sua família, domine negócios e conquiste <b>três cidades</b>.</p>
         <p><em>O império só começa quando você mandar.</em></p>
@@ -502,7 +507,7 @@ body.menu-active #fps-counter{display:none!important}
 
     <div class="menu-panel" id="credits-panel">
       <div class="menu-panel-head"><h2>🌹 SOBRE O JOGO</h2><button class="menu-back" data-menu-close>← VOLTAR</button></div>
-      <div class="save-card"><b>Godfather Web Edition v8.7.1</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
+      <div class="save-card"><b>Godfather Web Edition v8.8.0</b><br>Jogo HTML5/Canvas com cidades, propriedades, interiores, polícia, famílias rivais, veículos, sprites, save local e progressão.<br><br><b>Storage:</b> gf_save_v7 (progresso) · gf_save_backup_v1 (backup) · gf_settings_v1 (configurações) · gf3_keys (controles).</div>
     </div>
   </div>
 </div>
@@ -554,6 +559,7 @@ body.menu-active #fps-counter{display:none!important}
   <button onclick="location.reload()">⟳ RECOMEÇAR</button>
 </div>
 
+<script src="js/player-progression.js"></script>
 <script>
 'use strict';
 
@@ -1936,7 +1942,9 @@ const P = {
   invincible:0, wFrame:0, wTimer:0, sprShoot:0,
   takeDmg(v) {
     if (this.invincible>0) return;
-    this.hp -= v; this.invincible = 400; playSfx('hit',Math.min(1,v/20+.25));
+    const damage=playerTakeProtectedDamage(v);
+    if(damage<=0)return;
+    this.hp-=damage;this.invincible=400;playSfx('hit',Math.min(1,damage/20+.25));
     if (this.hp<=0) { this.hp=0; GS.gameOver=true; }
   },
   heal(v) { this.hp=Math.min(this.maxHp,this.hp+v); },
@@ -2170,8 +2178,8 @@ function tryInteriorInteract(){
 function processInteriorMovement(dt){
   if(P.invincible>0)P.invincible-=dt;tickCombatState(dt);INTERIOR.time+=dt;
   isSprinting=keysDown.has('ShiftLeft')||keysDown.has('ShiftRight');
-  if(isSprinting&&sprintStamina>5)sprintStamina=Math.max(0,sprintStamina-SPRINT_DRAIN*(dt/16));else{isSprinting=false;sprintStamina=Math.min(100,sprintStamina+SPRINT_REGEN*(dt/16));}
-  const sb=document.getElementById('sprint-bar');if(sb)sb.style.width=sprintStamina+'%';
+  if(isSprinting&&sprintStamina>5)sprintStamina=Math.max(0,sprintStamina-SPRINT_DRAIN*(dt/16));else{isSprinting=false;sprintStamina=Math.min(progressMaxStamina(),sprintStamina+SPRINT_REGEN*(dt/16));}
+  const sb=document.getElementById('sprint-bar');if(sb)sb.style.width=(100*sprintStamina/progressMaxStamina())+'%';
   const sc=Math.min(dt,34)/16,spd=CFG.PSPEED*sc*(isSprinting?1.55:1);let dx=0,dy=0;
   if(keysDown.has(KB.up))dy--;if(keysDown.has(KB.down))dy++;if(keysDown.has(KB.left))dx--;if(keysDown.has(KB.right))dx++;
   if(dx||dy){const l=Math.hypot(dx,dy),ox=P.x,oy=P.y;moveInteriorEntity(P,dx/l*spd,dy/l*spd,13);P.moving=Math.hypot(P.x-ox,P.y-oy)>.02;if(P.moving){P.wTimer+=dt;if(P.wTimer>120){P.wFrame=(P.wFrame+1)%4;P.wTimer=0;}}}else P.moving=false;
@@ -3322,6 +3330,8 @@ window.addEventListener('keydown', e => {
   if(e.code===KB.car){if(INTERIOR.active){showMsg('🚗 Não dá para usar o carro dentro do prédio.','i');return;}e.preventDefault();const dc=Math.hypot(P.x-CAR.x,P.y-CAR.y);if(!GS.inCar&&dc<80){GS.inCar=true;P.x=CAR.x;P.y=CAR.y;CAR.useTarget=false;showMsg('🚗 Entrou no carro.','i');}else if(GS.inCar){GS.inCar=false;const fp=findFreePoint(CAR.x+60,CAR.y,13,140);P.x=fp.x;P.y=fp.y;showMsg('🚶 Saiu do carro.','i');}else showMsg('🚗 Carro longe demais.','i');return;}
   if(e.code===KB.guard){GS.rank.guards===0&&guBgCountBonus()===0?showMsg('⭐ Precisa ser Caporegime.','d'):(syncGuards(),showMsg('👤 '+(GS.rank.guards+guBgCountBonus())+' guarda(s).','s'));return;}
   if(e.code===KB.missions){sbOpen('mis');return;}
+  if(e.code==='KeyP'){sbOpen('char');return;}
+  if(e.code==='KeyH'){usePlayerMedkit();return;}
   if(e.code===KB.upgrades){sbOpen('upg');return;}
   if(e.code===KB.reload){startReload();return;}
   if(e.code===KB.melee){performMelee();return;}
@@ -3358,11 +3368,11 @@ function processWASD(dt) {
     sprintStamina = Math.max(0, sprintStamina - SPRINT_DRAIN*(dt/16));
   } else {
     isSprinting = false;
-    sprintStamina = Math.min(100, sprintStamina + SPRINT_REGEN*(dt/16));
+    sprintStamina = Math.min(progressMaxStamina(), sprintStamina + SPRINT_REGEN*(dt/16));
   }
   // Update sprint bar
   const sb = document.getElementById('sprint-bar');
-  if(sb) sb.style.width = sprintStamina+'%';
+  if(sb) sb.style.width = (100*sprintStamina/progressMaxStamina())+'%';
   const sprintMult = (isSprinting && sprintStamina>5) ? 1.7 : 1;
   
   // Clamp an occasional long frame so tab switches / lag spikes cannot launch the
@@ -3397,13 +3407,7 @@ function processWASD(dt) {
     if(mFireTimer<=0){shoot(mwx,mwy);mFireTimer=w.cd;}
   }
   
-  // Out-of-combat heal (PS2 style: slow regen when no enemies nearby + not in combat)
-  if(!GS.inSafe && P.hp < P.maxHp) {
-    const anyEnemyNear = ENEMIES.some(e=>Math.hypot(e.x-P.x,e.y-P.y)<350) || RIVALS.some(r=>Math.hypot(r.x-P.x,r.y-P.y)<350);
-    if(!anyEnemyNear && GS.stars===0) {
-      P.hp = Math.min(P.maxHp, P.hp + 0.0005*dt); // very slow passive regen
-    }
-  }
+  tickPlayerRegen(dt);
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -3448,6 +3452,7 @@ function showMsg(txt,type){const c=document.getElementById('msgs');const el=docu
 let _sbActive = null;
 
 const SB_RENDERS = {
+  char:()=>playerProgressPanelRender(),
   mis:   ()=>misPanelRender(),
   upg:   ()=>upgPanelRender(),
   guard: ()=>guardPanelRender(),
@@ -3652,6 +3657,7 @@ function guBuy(key, lv) {
   setTimeout(saveGame, 500);
 }
 function updateHUD(){
+  playerProgressHud();
   document.getElementById('hmoney').textContent='$'+Math.floor(GS.money).toLocaleString('pt-BR');
   document.getElementById('hresp').textContent=GS.respect.toLocaleString('pt-BR');
   const rk=getRank(GS.respect);const re=document.getElementById('hrank');re.textContent=rk.name;re.style.color=rk.color;
@@ -4329,7 +4335,7 @@ function loop(ts) {
   if (!GS.paused && !GS.gameOver && !GS.won) {
     if(INTERIOR.active){
       tickWorldClock(dt);GS.inSafe=false;GS._wasSafe=false;GS.money+=(GS.passiveIncome/3600)*(dt/1000);
-      processWASD(dt);updateInterior(dt);
+      processWASD(dt);updateInterior(dt);tickPlayerRegen(dt);
       updateSpriteTimers(dt);
       misTick();checkDistricts();tickAutoSave(dt);updateHUD();
     }else{
@@ -4496,9 +4502,28 @@ const SAVE_BACKUP_KEY='gf_save_backup_v1';
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // autosave every 30s
 
+function isValidSaveData(d){
+  if(!d||![7,8,9,10,11,12,13,14,15,16,17,18].includes(d.ver))return false;
+  if(!Number.isInteger(d.mapId)||d.mapId<0||d.mapId>=MAP_DEFS.length)return false;
+  if(!Number.isFinite(d.money)||d.money<0||!Number.isFinite(d.respect)||d.respect<0)return false;
+  if(!Number.isFinite(d.px)||!Number.isFinite(d.py))return false;
+  if(!Array.isArray(d.props)||!Array.isArray(d.dists)||!Array.isArray(d.missions))return false;
+  if(d.props.length!==MAP_DEFS[d.mapId].props.length||d.dists.length!==MAP_DEFS[d.mapId].districts.length||d.missions.length!==MIS.length)return false;
+  if(!d.props.every(p=>p&&typeof p.owned==='boolean'&&Number.isInteger(p.ul)&&p.ul>=0&&p.ul<=3))return false;
+  if(!d.dists.every(x=>x&&['player','rival','neutral'].includes(x.owner)))return false;
+  if(!d.missions.every(x=>x&&['locked','available','active','completed'].includes(x.status)))return false;
+  if(d.ver===18){
+    if(!d.playerProgress||typeof d.playerProgress!=='object')return false;
+    for(const [k,def] of Object.entries(PLAYER_LEVELS))if(!Number.isInteger(d.playerProgress[k])||d.playerProgress[k]<0||d.playerProgress[k]>=def.values.length)return false;
+    if(!Number.isFinite(d.playerProgress.armorCurrent)||d.playerProgress.armorCurrent<0)return false;
+    for(const [k,kit] of Object.entries(PLAYER_KITS))if(!Number.isInteger(d.playerProgress.medkits?.[k])||d.playerProgress.medkits[k]<0||d.playerProgress.medkits[k]>kit.limit)return false;
+  }
+  return true;
+}
+
 function saveGame() {
   const data = {
-    ver: 17,
+    ver: 18,
     ts: Date.now(),
     mapId: currentMapId,
     money: GS.money,
@@ -4507,6 +4532,7 @@ function saveGame() {
     policeKills: GS.policeKills,
     px: INTERIOR.active&&INTERIOR.returnPos?INTERIOR.returnPos.x:P.x, py: INTERIOR.active&&INTERIOR.returnPos?INTERIOR.returnPos.y:P.y,
     php: P.hp, pangle:P.angle,
+    playerProgress:snapshotPlayerProgress(),
     heat:GS.heat, stars:GS.stars, wantedTimer:GS.wantedTimer, wantedClearing:GS.wantedClearing,
     inCar:INTERIOR.active?false:GS.inCar,
     car:{x:CAR.x,y:CAR.y,hp:CAR.hp,maxHp:CAR.maxHp,angle:CAR.angle,speed:CAR.speed},
@@ -4533,7 +4559,7 @@ function saveGame() {
   try {
     const next=JSON.stringify(data);
     const prev=localStorage.getItem(SAVE_KEY);
-    if(prev){try{const parsed=JSON.parse(prev);if(parsed&&parsed.ver)localStorage.setItem(SAVE_BACKUP_KEY,prev);}catch(e){}}
+    if(prev){try{const parsed=JSON.parse(prev);if(isValidSaveData(parsed))localStorage.setItem(SAVE_BACKUP_KEY,prev);}catch(e){}}
     localStorage.setItem(SAVE_KEY,next);
     return true;
   } catch(e) { return false; }
@@ -4544,10 +4570,12 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15,16,17].includes(data.ver)) return false;
+    if(!isValidSaveData(data)) return false;
 
     // Load map first (resets everything cleanly)
     loadMap(data.mapId);
+    // Migration: v7–v17 defaults to 100 HP. Restore cap before loading php.
+    restorePlayerProgress(data.ver>=18?data.playerProgress:null);
 
     // Restore GS
     GS.money = data.money;
@@ -4604,7 +4632,7 @@ function loadGame() {
     if(data.ver>=8){
       if(data.car){CAR.x=data.car.x*legacyScale;CAR.y=data.car.y*legacyScale;CAR.hp=Math.max(1,Math.min(CAR.maxHp,data.car.hp||CAR.maxHp));CAR.angle=data.car.angle||0;CAR.speed=data.car.speed||0;CAR.useTarget=false;const fp=findFreePoint(CAR.x,CAR.y,24);CAR.x=fp.x;CAR.y=fp.y;}
       GS.inCar=!!data.inCar;
-      sprintStamina=Number.isFinite(data.sprintStamina)?Math.max(0,Math.min(100,data.sprintStamina)):100;
+      sprintStamina=Number.isFinite(data.sprintStamina)?Math.max(0,Math.min(progressMaxStamina(),data.sprintStamina)):progressMaxStamina();
       if(data.ver>=10&&Number.isFinite(data.gameMinutes))gameMinutes=((data.gameMinutes%1440)+1440)%1440;
       if(data.ver>=10&&typeof data.minimapVisible==='boolean')minimapVisible=data.minimapVisible;
       rivalPower=Number.isFinite(data.rivalPower)?data.rivalPower:100;
@@ -4648,15 +4676,15 @@ function deleteSave() {
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem(SAVE_BACKUP_KEY);
 }
-function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return d&&[7,8,9,10,11,12,13,14,15,16,17].includes(d.ver)?d:null;}catch(e){return null;}}
-function restoreBackupSave(){const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw||!hasBackupSave())return false;const current=localStorage.getItem(SAVE_KEY);localStorage.setItem(SAVE_KEY,raw);if(current){try{const d=JSON.parse(current);if(d&&d.ver)localStorage.setItem(SAVE_BACKUP_KEY,current);}catch(e){}}return true;}
+function hasBackupSave(){try{const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw)return null;const d=JSON.parse(raw);return isValidSaveData(d)?d:null;}catch(e){return null;}}
+function restoreBackupSave(){const raw=localStorage.getItem(SAVE_BACKUP_KEY);if(!raw||!hasBackupSave())return false;const current=localStorage.getItem(SAVE_KEY);localStorage.setItem(SAVE_KEY,raw);if(current){try{const d=JSON.parse(current);if(isValidSaveData(d))localStorage.setItem(SAVE_BACKUP_KEY,current);}catch(e){}}return true;}
 
 function hasSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if(!raw) return null;
     const data = JSON.parse(raw);
-    if(!data || ![7,8,9,10,11,12,13,14,15,16,17].includes(data.ver)) return null;
+    if(!isValidSaveData(data)) return null;
     return data;
   } catch(e) { return null; }
 }
@@ -4737,7 +4765,21 @@ function bindSetting(id,key,kind='bool'){
   el.addEventListener('input',()=>{if(kind==='bool')GAME_SETTINGS[key]=!!el.checked;else if(kind==='range')GAME_SETTINGS[key]=Number(el.value)/100;else GAME_SETTINGS[key]=el.value;saveSettings();syncSettingsUI();if(key==='quality'&&gameSessionStarted&&!mainMenuActive){CITY_LIFE.map=-1;}if(kind==='range'||key==='audioEnabled')playSfx('ui',.35);});
 }
 function exportSave(){const raw=localStorage.getItem(SAVE_KEY);if(!raw){alert('Nenhum save para exportar.');return;}const blob=new Blob([raw],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='godfather-save-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);playSfx('save',.6);}
-function importSaveFile(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));if(!obj||![7,8,9,10,11,12,13,14,15,16,17].includes(obj.ver))throw new Error('Versão incompatível');localStorage.setItem(SAVE_KEY,JSON.stringify(obj));updateMainMenuSaveUI();alert('Save importado com sucesso.');playSfx('save',.7);}catch(e){alert('Não foi possível importar este save: '+e.message);}};r.readAsText(file);}
+function importSaveFile(file){
+  if(!file)return;
+  if(file.size>2*1024*1024){alert('Save muito grande (máximo 2 MB).');return;}
+  const reader=new FileReader();
+  reader.onload=()=>{try{
+    const obj=JSON.parse(String(reader.result||''));
+    if(!isValidSaveData(obj))throw new Error('Save incompatível ou incompleto');
+    const old=localStorage.getItem(SAVE_KEY);
+    if(old){try{if(isValidSaveData(JSON.parse(old)))localStorage.setItem(SAVE_BACKUP_KEY,old);}catch(e){}}
+    localStorage.setItem(SAVE_KEY,JSON.stringify(obj));
+    updateMainMenuSaveUI();updateStorageSummary();alert('Save importado com sucesso.');playSfx('save',.7);
+  }catch(e){alert('Não foi possível importar este save: '+e.message);}};
+  reader.onerror=()=>alert('Não foi possível ler o arquivo.');
+  reader.readAsText(file);
+}
 
 loadSettings();applySettings();syncSettingsUI();
 enterMainMenuState();
@@ -4766,6 +4808,7 @@ function resetCampaignProgress(){
   GS.money=1000;GS.respect=0;GS.rank=RANKS[0];GS.killCount=0;GS.policeKills=0;
   GS.gameOver=false;GS.won=false;GS.paused=true;GS.inCar=false;GS.passiveIncome=0;
   GS.heat=0;GS.stars=0;GS.wantedTimer=0;GS.wantedClearing=false;GS.camX=0;GS.camY=0;
+  resetPlayerProgress();
   P.hp=P.maxHp;P.invincible=0;P.angle=0;P.wFrame=0;P.wTimer=0;P.sprShoot=0;P.moving=false;
   curWeapon=0;weaponOwned=[true,false,false];
   for(const w of WEAPONS){w.ammo=w.maxAmmo;w.clip=w.magSize;}
