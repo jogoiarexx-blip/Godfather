@@ -1,0 +1,23 @@
+/* v8.9 — armory. Compact, scrollable and keyboard-closeable. */
+#weapon-shop{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;padding:16px;cursor:default;backdrop-filter:blur(5px)}
+#weapon-shop.on{display:flex}
+#weapon-shop-card{width:min(720px,96vw);max-height:min(88vh,770px);border:1px solid #947332;border-radius:17px;background:linear-gradient(165deg,#1b1817,#090909 72%);box-shadow:0 20px 80px rgba(0,0,0,.8),0 0 0 1px rgba(226,177,76,.09) inset;display:flex;flex-direction:column;overflow:hidden}
+#weapon-shop-top{padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(212,175,55,.2)}
+#weapon-shop-top h2{font:700 20px Cinzel,serif;color:#ecd39c;letter-spacing:.7px}
+#weapon-shop-top p{color:#a9997b;font:13px "Crimson Text",serif;margin-top:4px}
+#weapon-shop-close{font:700 23px Cinzel,serif;min-width:38px;min-height:38px;background:rgba(255,255,255,.06);border:1px solid rgba(212,175,55,.3);border-radius:9px;color:#efdcaa;cursor:pointer}
+#weapon-shop-close:hover{background:rgba(139,0,0,.5)}
+#weapon-shop-money{padding:9px 22px;font:700 14px Cinzel,serif;color:#f1d77b;background:rgba(212,175,55,.07)}
+#weapon-shop-tabs{display:flex;gap:5px;padding:11px 14px 0}
+.ws-tab{flex:1;background:rgba(255,255,255,.035);border:1px solid rgba(212,175,55,.16);border-radius:9px 9px 0 0;color:#b8aa91;padding:12px 5px;font:700 12px Cinzel,serif;cursor:pointer}
+.ws-tab.active,.ws-tab:hover{background:rgba(212,175,55,.14);color:#f7df9b;border-color:rgba(212,175,55,.5)}
+#weapon-shop-content{padding:17px 22px 24px;overflow-y:auto;min-height:220px;scrollbar-color:#6c5425 #171410;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;align-content:start}
+.ws-card{border:1px solid rgba(212,175,55,.2);border-radius:11px;background:linear-gradient(145deg,rgba(79,53,28,.15),rgba(12,10,11,.7));padding:14px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.ws-name{font:700 14px Cinzel,serif;color:#e7c984}
+.ws-description{font:14px "Crimson Text",Georgia,serif;color:#b3a48f;line-height:1.45}
+.ws-buy{padding:9px 10px;min-height:39px;background:linear-gradient(110deg,#64201b,#411b18);border:1px solid rgba(212,175,55,.55);border-radius:7px;color:#f5e0b3;font:700 11px Cinzel,serif;cursor:pointer;letter-spacing:.2px}
+.ws-buy:hover:not(:disabled){background:#833029}
+.ws-buy:disabled{opacity:.4;cursor:not-allowed}
+.ws-section{grid-column:1/-1;border-bottom:1px solid rgba(212,175,55,.3);padding:12px 0 4px;color:#e7d9b4;font:700 14px Cinzel,serif}
+#weapon-shop-foot{border-top:1px solid rgba(212,175,55,.15);padding:10px 22px;color:#8f8068;font:13px "Crimson Text",Georgia,serif}
+@media (max-width:590px){#weapon-shop-card{max-height:95vh}#weapon-shop-content{grid-template-columns:1fr;padding:12px 15px;gap:8px}#weapon-shop-top{padding:13px}#weapon-shop-top h2{font-size:16px}.ws-tab{font-size:10px;padding:10px 2px}.ws-card{padding:10px}}
